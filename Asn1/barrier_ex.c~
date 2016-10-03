@@ -79,6 +79,7 @@ int main() {
 	{
 		long int *subArr = (long int*) malloc(sizeof(long int)*chunkSize);
 		memcpy(subArr,array+i*chunkSize, chunkSize*sizeof(long int));
+		//memcpy(data[i], subArr, THREAD_COUNT*sizeof(long int*)+1);
 		data[i] = subArr;
 		for (int j = 0; j < chunkSize; j++)
 		{
