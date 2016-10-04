@@ -18,7 +18,7 @@ pthread_barrier_t mybarrier;
 
 typedef struct threadData{
 	long int *chunk;
-	long int *sample;
+	//long int *sample;
 	int pid;
 	int n;
 	int ps;
@@ -101,7 +101,11 @@ int main(int argc, char**argv) {
 		free((void*)data[i]);
 	}
 	free((void *) data);
-	
+	for (i = 0; i < THREAD_COUNT; i++)
+	{
+		free(mythrD[i].chunk);
+	}
+	free((void*)mythrD);
 
 
     return 0;
