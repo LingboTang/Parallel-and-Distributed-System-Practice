@@ -9,9 +9,6 @@
 #include <pthread.h>
 #include <time.h>
 
-#define N 36
-#define X 20
-#define THREAD_COUNT 3
 
 
 pthread_barrier_t mybarrier;
@@ -37,16 +34,19 @@ int main(int argc, char**argv) {
 	int numbers = atoi(argv[1]);
 	int ps = atoi(argv[2]);
 	int i;
+	int allChunkSize = numbers/ps;
+	int allSampleSize = ps;
 	thrD *mythrD = (thrD *) malloc(sizeof(thrD)*ps);
 	for (i = 0; i < ps; i++)
 	{
+		mythrD[i].sample = (long int *) malloc(sizeof(long int)*ps);
 		mythrD[i].pid = i;
 		mythrD[i].n = numbers;
 		mythrD[i].ps = ps;
  	}
-
 	
-	long int * array = (long int *) malloc(sizeof(long int)*N);
+
+	long int * array = (long int *) malloc(sizeof(long int)*numbers);
 	
 	pthread_t ids[ps];
 
@@ -54,13 +54,13 @@ int main(int argc, char**argv) {
 	
 	pthread_barrier_init(&mybarrier, NULL, ps + 1);
 
-	int chunkSize = N/ps;
+	int chunkSize = numbers/ps;
 	long int ** data = (long int **) malloc(sizeof(long int*)*ps);
 	long int * g_samples = (long int *) malloc(sizeof(long int)*(ps*ps));
 
-	for (i = 0; i < N; i++)
+	for (i = 0; i < numbers; i++)
 	{
-        	array[i] = rand()%X;
+        	array[i] = random()%20;
     }
 
 	for (i = 0; i < ps; i++)
@@ -70,10 +70,9 @@ int main(int argc, char**argv) {
 		mythrD[i].chunk = data[i];
 	}	
 	
-	printf("Before Sorting: \n");
 	for (i =0; i < ps; i++)
 	{
-		printArr(mythrD[i].chunk, 12);
+		printArr(mythrD[i].chunk, chunkSize);
 	}
 
 	for (i=0; i < ps; i++) {
@@ -88,19 +87,19 @@ int main(int argc, char**argv) {
    	}
 	pthread_barrier_destroy(&mybarrier);
 
-	/*for (i = 0; i < ps; i++) {
+	for (i = 0; i < ps; i++) {
 		memcpy(&g_samples[i*ps], mythrD[i].sample, ps*sizeof(long int));
 	}
 
 	for (i = 0; i< ps*ps; i++) {
 		printf("%ld ",g_samples[i]);
-	}*/
+	}
 
 	
 	printf("After Sorting: \n");
 	for (i =0; i < ps; i++)
 	{
-		printArr(mythrD[i].chunk, 12);
+		printArr(mythrD[i].chunk, chunkSize);
 	}
 
 	free((void *) array);
@@ -125,15 +124,17 @@ void* threadFn1(void * chunkD) {
 	thrD mychunkD = *(thrD *) chunkD;
 	int off_set = mychunkD.n/(mychunkD.ps*mychunkD.ps);
 	int chunkSize = mychunkD.n/mychunkD.ps;
+	int sampleSize = chunkSize/off_set;
 	int wait_sec = 1 + rand() % 2;
 	//sleep(wait_sec);
 	pthread_barrier_wait(&mybarrier);
 	qsort(mychunkD.chunk,chunkSize,sizeof(long int),cmpfunc);
-	mychunkD.sample = (long int *) malloc(sizeof(long int)*(chunkSize/off_set));
-	for (int i = 0; i < chunkSize; i++)
+	for (int i = 0; i < sampleSize; i++)
 	{
-		mychunkD.sample[i] = mychunkD.chunk[i*off_set];
+		int sample = mychunkD.chunk[i*off_set];
+		mychunkD.sample[i] = sample;
 	}
+	printf("In this thread: %d\n", mychunkD.pid);
 	//sleep(wait_sec);
 	return NULL;
 }
