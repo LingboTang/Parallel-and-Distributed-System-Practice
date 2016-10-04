@@ -88,13 +88,13 @@ int main(int argc, char**argv) {
    	}
 	pthread_barrier_destroy(&mybarrier);
 
-	/*for (i = 0; i < ps; i++) {
+	for (i = 0; i < ps; i++) {
 		memcpy(&g_samples[i*ps], mythrD[i].sample, ps*sizeof(long int));
 	}
 
 	for (i = 0; i< ps*ps; i++) {
 		printf("%ld ",g_samples[i]);
-	}*/
+	}
 
 	
 	printf("After Sorting: \n");
