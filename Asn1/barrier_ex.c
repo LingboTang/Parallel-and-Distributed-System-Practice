@@ -58,8 +58,8 @@ int main() {
 
 	for (i=0; i < THREAD_COUNT; i++) {
 		short_ids[i] = i;
-        	pthread_create(&ids[i], NULL, threadFn, &short_ids[i]);
-    	}
+        pthread_create(&ids[i], NULL, threadFn, &short_ids[i]);
+    }
 
 
 	pthread_barrier_wait(&mybarrier);
@@ -77,26 +77,8 @@ int main() {
 
 	for (i = 0; i < THREAD_COUNT; i++)
 	{
-		long int *subArr = (long int*) malloc(sizeof(long int)*chunkSize);
-		memcpy(subArr,array+i*chunkSize, chunkSize*sizeof(long int));
-		data[i] = subArr;
-		for (int j = 0; j < chunkSize; j++)
-		{
-			printf("%ld ",data[i][j]);
-		}
-		free((void*)subArr);
-	}
-	
-
-	for (i = 0; i < THREAD_COUNT; i++)
-	{
-		printf("Array %d: \n",i);
-		for(int j =0;j< chunkSize; j++)
-		{
-			if (j == 0 ) {printf("[ ");}
-			printf("%ld ",data[i][j]);
-			if (j==chunkSize-1) {printf("]\n");}
-		}		
+		data[i] = (long int*) malloc(sizeof(long int)*chunkSize);
+		memcpy(data[i],&array[i*chunkSize], chunkSize*sizeof(long int));
 	}
 
 	printf("Before Sorting: \n");
@@ -108,7 +90,12 @@ int main() {
 	printf("time spent: %f\n",time_spent);
 
 	free((void *) array);
-	
+	for (i = 0; i < THREAD_COUNT; i++)
+	{
+		free((void*)data[i]);
+	}
+	free((void *) data);
+
 
     return 0;
 }
