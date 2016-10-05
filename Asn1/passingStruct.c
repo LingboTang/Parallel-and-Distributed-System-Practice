@@ -17,14 +17,16 @@ typedef struct threadData{
 	long int *chunk;
 	long int *sample;
 	long int *pivotArray;
+	long int **tempChunk;
 	int *sampleIndex;
+	int **indexGroup;
 	int pid;
 	int n;
 	int ps;
 } thrD;
 
 int partition(long int *array,long int pivot, int size);
-void multiplePartition(long int *array, long int * pivot_array, int* stored_index_array, int size, int size2);
+void multiplePartition(long int *array, long int * pivot_array, int* stored_index_array, int**indexGroup, int size, int size2, int size3);
 int cmpfunc(const void*a, const void*b);
 void printArr(long int* arr, int size);
 void* threadFn1(void * chunkD);
@@ -51,6 +53,12 @@ int main(int argc, char**argv) {
 		mythrD[i].sample = (long int *) malloc(sizeof(long int)*ps);
 		mythrD[i].sampleIndex =(int *) malloc(sizeof(int)*(ps-1));
 		mythrD[i].pivotArray =(long int *) malloc(sizeof(long int)*(ps-1));
+		mythrD[i].tempChunk = (long int **) malloc(sizeof(long int*)*ps);
+		mythrD[i].indexGroup = (int**) malloc(sizeof(int*)*ps);
+		for (int j = 0; j<ps; j++)
+		{
+			mythrD[i].indexGroup[j] = (int *) malloc(sizeof(int)*2);
+		}
 		mythrD[i].pid = i;
 		mythrD[i].n = numbers;
 		mythrD[i].ps = ps;
@@ -72,7 +80,7 @@ int main(int argc, char**argv) {
 
 	for (i = 0; i < numbers; i++)
 	{
-        	array[i] = random()%20;
+        	array[i] = random()%100;
     }
 
 
@@ -155,8 +163,28 @@ int main(int argc, char**argv) {
 	}
 	printf("\n");
 
+	for (i =0; i<ps; i++)
+	{
+		printf("This thread: \n");
+		for(int j = 0; j< ps; j++)
+		{
+			for (int k = 0; k < ps-1; k++)
+			{
+				printf("%d ", mythrD[i].indexGroup[j][k]);
+			}
+		}
+		printf("\n");
+	}
+	printf("\n");
+
 	/*Phase 4*/
-		
+	/*for (i = 0; i<ps; i++)
+	{
+		for (int j = 0; j<ps; j++)
+		{
+			mythrD
+		}
+	}*/
 
 	/*legacy debugging*/
 	for (i =0; i < ps; i++)
@@ -179,6 +207,11 @@ int main(int argc, char**argv) {
 		free(mythrD[i].sample);
 		free(mythrD[i].pivotArray);
 		free(mythrD[i].sampleIndex);
+		for (int j = 0; j<ps; j++)
+		{
+			free(mythrD[i].indexGroup[j]);
+		}
+		free(mythrD[i].indexGroup);
 	}
 	free((void*)mythrD);
 	free(g_samples);
@@ -209,30 +242,48 @@ void* threadFn3(void * chunkD) {
 	thrD mychunkD = *(thrD *) chunkD;
 	int chunkSize = mychunkD.n/mychunkD.ps;
 	pthread_barrier_wait(&mybarrier);
-	multiplePartition(mychunkD.chunk, mychunkD.pivotArray, mychunkD.sampleIndex, chunkSize, mychunkD.ps-1);
+	multiplePartition(mychunkD.chunk, mychunkD.pivotArray, mychunkD.sampleIndex,mychunkD.indexGroup, chunkSize, mychunkD.ps-1, mychunkD.ps);
 	return NULL;
 }
 
 int partition(long int *array,long int pivot, int size)
 {
-	int stored_index = size-1;
-	for (int i = size; i>0; i--)
+	int stored_index = 0;
+	for (int i = 0; i<size; i++)
 	{
-		if (array[i] > pivot)
+		if (array[i] <= pivot)
 		{
-			--stored_index;
+			++stored_index;
 		}	
 	}
-	return stored_index;
+	return stored_index-1;
 }
 
-void multiplePartition(long int *array,long int * pivot_array, int* stored_index_array, int size, int size2)
+void multiplePartition(long int *array,long int * pivot_array, int* stored_index_array,int **indexGroup, int size, int size2, int size3)
 {
 	for (int i = 0; i < size2; i++)
 	{
 		int stored_index = 0;
 		stored_index = partition(array,pivot_array[i],size);
 		stored_index_array[i] = stored_index;
+	}
+	for (int i = 0; i< size3; i++)
+	{
+		if (i == 0)
+		{
+			indexGroup[i][0] = 0;
+			indexGroup[i][1] = stored_index_array[i];
+		}
+		else if (i == size3-1)
+		{
+			indexGroup[i][0] = stored_index_array[i-1];
+			indexGroup[i][1] = size-1;
+		}
+		else
+		{
+			indexGroup[i][0] = stored_index_array[i-1];
+			indexGroup[i][1] = stored_index_array[i];
+		}
 	}
 }
 

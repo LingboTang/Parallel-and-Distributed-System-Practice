@@ -41,7 +41,7 @@ void multiplePartition(long int *array,long int * pivot_array, int* stored_index
 		}
 		else
 		{
-			index_group[i][0] = stored_index_array[i-1];
+			index_group[i][0] = stored_index_array[i];
 			index_group[i][1] = stored_index_array[i];
 		}
 	}
