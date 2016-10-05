@@ -19,6 +19,8 @@ typedef struct threadData{
 	long int *pivotArray;
 	long int **passChunks;
 	int *passLength;
+	//long int *returnArray;
+	int returnLength;
 	long int **tempChunks;
 	int *sampleIndex;
 	int **indexGroup;
@@ -68,6 +70,7 @@ int main(int argc, char**argv) {
 		mythrD[i].pid = i;
 		mythrD[i].n = numbers;
 		mythrD[i].ps = ps;
+		mythrD[i].returnLength = 0;
  	}
 	
 
@@ -219,7 +222,7 @@ int main(int argc, char**argv) {
 		}
 		printf("\n");
 	}
-	/*printf("Before printig thereChunk\n");
+	printf("Before printig thereChunk\n");
 	for (i = 0; i<ps; i++)
 	{
 		for (int j = 0; j<ps; j++)
@@ -241,11 +244,20 @@ int main(int argc, char**argv) {
 		}
 		printf("\n");
 	}
-	printf("\n");*/
+	printf("\n");
+
+	for (i = 0; i<ps; i++)
+	{
+		for (int j = 0; j<ps; j++)
+		{
+			mythrD[i].returnLength += mythrD[i].passLength[j];
+		}
+	}
+
 	/*Thread function*/
 	for (i = 0; i < ps; i++)
 	{
-		pthread_create(&ids[i],NULL,threadFn4,(void*)&(mythrD[i]));
+		pthread_create(&ids[i],NULL,threadFn3,(void*)&(mythrD[i]));
 	}
 	
 	/*Barrier 4*/
@@ -259,7 +271,7 @@ int main(int argc, char**argv) {
 
 	
 	printf("sub thread merge\n");
-	for (i = 0; i<ps; i++)
+	/*for (i = 0; i<ps; i++)
 	{
 		int totalSize = 0;
 		for (int j = 0; j<ps; j++)
@@ -272,7 +284,7 @@ int main(int argc, char**argv) {
 			printf("\n");
 		}
 		printf("\n");
-	}
+	}*/
 	printf("\n");
 
 	/*legacy debugging*/
@@ -339,13 +351,6 @@ void* threadFn4(void * chunkD) {
 	thrD mychunkD = *(thrD *) chunkD;
 	int chunkSize = mychunkD.n/mychunkD.ps;
 	pthread_barrier_wait(&mybarrier);
-	int i = mychunkD.ps-1;
-	while (i>0)
-	{
-		merge(mychunkD.passChunks[0],mychunkD.passLength[0],mychunkD.passChunks[i],mychunkD.passLength[i]);
-		i--;
-	}
-	//merge(left, llength, right, rlength)
 	return NULL;
 }
 

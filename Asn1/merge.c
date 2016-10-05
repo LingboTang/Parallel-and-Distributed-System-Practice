@@ -13,17 +13,17 @@ void merge(long int *left, int llength, long int *right, int rlength)
 	/*
 	 * Pointers to the elements being sorted in the temporary memory locations.
 	 */
-	int *ll = ltmp;
-	int *rr = rtmp;
+	long int *ll = ltmp;
+	long int *rr = rtmp;
 
-	int *result = left;
+	long int *result = left;
 
 	/*
 	 * Copy the segment of the array to be merged into the temporary memory
 	 * locations.
 	 */
-	memcpy(ltmp, left, llength * sizeof(int));
-	memcpy(rtmp, right, rlength * sizeof(int));
+	memcpy(ltmp, left, llength * sizeof(long int));
+	memcpy(rtmp, right, rlength * sizeof(long int));
 
 	while (llength > 0 && rlength > 0) {
 		if (*ll <= *rr) {
@@ -74,12 +74,36 @@ void merge(long int *left, int llength, long int *right, int rlength)
 
 int main()
 {
-	int left[4] = {0,1,2,9};
+	/*int left[4] = {0,1,2,9};
 	int right[2] = {7,8};
-	merge(left, 4, right, 2);
-	for (int i=0; i<6;i++)
+	merge(left, 4, right, 2);*/
+	long int array[3][3] = {{0,1,2},{7,8,9},{3,4,5}};
+	int length[3] = {3,3,3};
+	//long int left[4] = {0,1,2,9};
+	//long int right[2] = {7,8};
+	int len = 3;
+	//int finalCount = 0;
+	/*while (finalCount < 2)
 	{
-		printf("%d ",left[i]);
+		merge(array )
+	}*/
+	int finalCount = 2;
+	while (finalCount > 0)
+	{
+		merge(array[0],len,array[finalCount],3);
+		finalCount--;
+		len = len+3;
+	}
+	/*for (int i = 0; i<3; i++)
+	{
+		merge(array[0],len,array[i+1],3);
+		len = len + i*3;
+	}*/
+	//merge(array[0],3,array[1],3);
+	//merge(array[0],6,array[2],3);
+	for (int i=0; i<9;i++)
+	{
+		printf("%ld ",array[0][i]);
 	}
 	printf("\n");
 	return 0;
