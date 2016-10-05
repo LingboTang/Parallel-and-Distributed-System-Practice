@@ -186,10 +186,10 @@ int main(int argc, char**argv) {
 	{
 		for(int j = 0; j<ps; j++)
 		{
-			int subsize = mythrD[i].indexGroup[j][1]-mythrD[i].indexGroup[j][0]+1;
-			int start = mythrD[i].indexGroup[j][0];
+			int subsize = mythrD[j].indexGroup[i][1]-mythrD[j].indexGroup[i][0]+1;
+			int start = mythrD[j].indexGroup[i][0];
 			mythrD[i].tempChunks[j] = (long int*) malloc(sizeof(long int)*subsize);
-			memcpy(mythrD[i].tempChunks[j], &mythrD[i].chunk[start], subsize*sizeof(long int));
+			memcpy(mythrD[i].tempChunks[j], &mythrD[j].chunk[start], subsize*sizeof(long int));
 		}
 	}
 	
@@ -200,8 +200,35 @@ int main(int argc, char**argv) {
 			mythrD[i].passChunks[j] = mythrD[j].tempChunks[i];
 		}
 	}
+	/*Thread function*/
+	for (i = 0; i < ps; i++)
+	{
+		pthread_create(&ids[i],NULL,threadFn3,(void*)&(mythrD[i]));
+	}
 	
+	/*Barrier 3*/
+	pthread_barrier_wait(&mybarrier);
+
+	for (i=0; i < ps; i++) {
+		pthread_join(ids[i], NULL);
+   	}	
+
 	/* debbuging tempchunk */
+
+	/*for (i = 0; i< ps; i++)
+	{
+		for (int j =0; j<ps; j++)
+		{
+			int subsize = mythrD[j].indexGroup[i][1]-mythrD[j].indexGroup[i][0]+1;
+			for(int k = 0; k<subsize; k++)
+			{
+				printf("%ld ", mythrD[i].passChunks[j][k]);
+			}
+			printf("\n");
+		}
+		printf("\n");
+	}
+	printf("Before printig tempChunk\n");
 	for (i = 0; i<ps; i++)
 	{
 		for (int j = 0; j<ps; j++)
@@ -214,7 +241,7 @@ int main(int argc, char**argv) {
 			printf("\n");
 		}
 		printf("\n");
-	}
+	}*/
 
 	/*legacy debugging*/
 	for (i =0; i < ps; i++)
