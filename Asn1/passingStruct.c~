@@ -326,7 +326,7 @@ void* threadFn3(void * chunkD) {
 	return NULL;
 }
 
-/*void* threadFn4(void * chunkD) {
+void* threadFn4(void * chunkD) {
 	thrD mychunkD = *(thrD *) chunkD;
 	int chunkSize = mychunkD.n/mychunkD.ps;
 	pthread_barrier_wait(&mybarrier);
@@ -338,7 +338,7 @@ void* threadFn3(void * chunkD) {
 	}
 	//merge(left, llength, right, rlength)
 	return NULL;
-}*/
+}
 
 int partition(long int *array,long int pivot, int size)
 {
