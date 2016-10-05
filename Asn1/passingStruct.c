@@ -18,6 +18,7 @@ typedef struct threadData{
 	long int *sample;
 	long int *pivotArray;
 	long int **passChunks;
+	int *passLength;
 	long int **tempChunks;
 	int *sampleIndex;
 	int **indexGroup;
@@ -32,7 +33,8 @@ int cmpfunc(const void*a, const void*b);
 void printArr(long int* arr, int size);
 void* threadFn1(void * chunkD);
 void* threadFn3(void * chunkD);
-void merge(int *left, int llength, int *right, int rlength);
+void* threadFn4(void * chunkD);
+void merge(long int *left, int llength, long int *right, int rlength);
 
 int main(int argc, char**argv) {
 	
@@ -58,6 +60,7 @@ int main(int argc, char**argv) {
 		mythrD[i].tempChunks = (long int **) malloc(sizeof(long int*)*ps);
 		mythrD[i].indexGroup = (int**) malloc(sizeof(int*)*ps);
 		mythrD[i].passChunks = (long int **) malloc(sizeof(long int*)*ps);
+		mythrD[i].passLength = (int *)malloc(sizeof(int)*ps);
 		for (int j = 0; j<ps; j++)
 		{
 			mythrD[i].indexGroup[j] = (int *) malloc(sizeof(int)*2);
@@ -141,7 +144,7 @@ int main(int argc, char**argv) {
    	}	
 
 	/*Debugginig phase 3*/
-	printf("Gathered Samples\n");
+	/*printf("Gathered Samples\n");
 	for (int i = 0; i < ps*ps; i++)
 	{
 		
@@ -178,7 +181,7 @@ int main(int argc, char**argv) {
 		}
 		printf("\n");
 	}
-	printf("\n");
+	printf("\n");*/
 
 	/*Phase 4*/
 	
@@ -186,10 +189,10 @@ int main(int argc, char**argv) {
 	{
 		for(int j = 0; j<ps; j++)
 		{
-			int subsize = mythrD[j].indexGroup[i][1]-mythrD[j].indexGroup[i][0]+1;
-			int start = mythrD[j].indexGroup[i][0];
+			int subsize = mythrD[i].indexGroup[j][1]-mythrD[i].indexGroup[j][0]+1;
+			int start = mythrD[i].indexGroup[j][0];
 			mythrD[i].tempChunks[j] = (long int*) malloc(sizeof(long int)*subsize);
-			memcpy(mythrD[i].tempChunks[j], &mythrD[j].chunk[start], subsize*sizeof(long int));
+			memcpy(mythrD[i].tempChunks[j], &mythrD[i].chunk[start], subsize*sizeof(long int));
 		}
 	}
 	
@@ -197,6 +200,7 @@ int main(int argc, char**argv) {
 	{
 		for (int j = 0; j<ps; j++)
 		{
+			mythrD[i].passLength[j] = mythrD[j].indexGroup[i][1]-mythrD[j].indexGroup[i][0]+1;
 			mythrD[i].passChunks[j] = mythrD[j].tempChunks[i];
 		}
 	}
@@ -206,7 +210,7 @@ int main(int argc, char**argv) {
 		pthread_create(&ids[i],NULL,threadFn3,(void*)&(mythrD[i]));
 	}
 	
-	/*Barrier 3*/
+	/*Barrier 4*/
 	pthread_barrier_wait(&mybarrier);
 
 	for (i=0; i < ps; i++) {
@@ -215,11 +219,12 @@ int main(int argc, char**argv) {
 
 	/* debbuging tempchunk */
 
-	/*for (i = 0; i< ps; i++)
+	for (i = 0; i< ps; i++)
 	{
 		for (int j =0; j<ps; j++)
 		{
 			int subsize = mythrD[j].indexGroup[i][1]-mythrD[j].indexGroup[i][0]+1;
+			
 			for(int k = 0; k<subsize; k++)
 			{
 				printf("%ld ", mythrD[i].passChunks[j][k]);
@@ -228,7 +233,7 @@ int main(int argc, char**argv) {
 		}
 		printf("\n");
 	}
-	printf("Before printig tempChunk\n");
+	printf("Before printig thereChunk\n");
 	for (i = 0; i<ps; i++)
 	{
 		for (int j = 0; j<ps; j++)
@@ -241,6 +246,15 @@ int main(int argc, char**argv) {
 			printf("\n");
 		}
 		printf("\n");
+	}
+	/*for (i = 0; i<ps; i++)
+	{
+		int totalSize = 0;
+		for (int j = 0; j<ps; j++)
+		{
+			totalSize = totalSize + mythrD[i].passLength[j];
+			for (int k = 0; k<subsize; k++)
+		}
 	}*/
 
 	/*legacy debugging*/
@@ -302,6 +316,20 @@ void* threadFn3(void * chunkD) {
 	multiplePartition(mychunkD.chunk, mychunkD.pivotArray, mychunkD.sampleIndex,mychunkD.indexGroup, chunkSize, mychunkD.ps-1, mychunkD.ps);
 	return NULL;
 }
+
+/*void* threadFn4(void * chunkD) {
+	thrD mychunkD = *(thrD *) chunkD;
+	int chunkSize = mychunkD.n/mychunkD.ps;
+	pthread_barrier_wait(&mybarrier);
+	int i = mychunkD.ps-1;
+	while (i>0)
+	{
+		merge(mychunkD.passChunks[0],mychunkD.passLength[0],mychunkD.passChunks[i],mychunkD.passLength[i]);
+		i--;
+	}
+	//merge(left, llength, right, rlength)
+	return NULL;
+}*/
 
 int partition(long int *array,long int pivot, int size)
 {
@@ -368,15 +396,15 @@ void printArr(long int* arr, int size)
  * https://github.com/markwkm/mergesort/blob/master/mergesort.c
  */
 
-void merge(int *left, int llength, int *right, int rlength)
+void merge(long int *left, int llength, long int *right, int rlength)
 {
-	int *ltmp = (int *) malloc(llength * sizeof(int));
-	int *rtmp = (int *) malloc(rlength * sizeof(int));
+	long int *ltmp = (long int *) malloc(llength * sizeof(long int));
+	long int *rtmp = (long int *) malloc(rlength * sizeof(long int));
 
-	int *ll = ltmp;
-	int *rr = rtmp;
+	long int *ll = ltmp;
+	long int *rr = rtmp;
 
-	int *result = left;
+	long int *result = left;
 
 	memcpy(ltmp, left, llength * sizeof(int));
 	memcpy(rtmp, right, rlength * sizeof(int));
