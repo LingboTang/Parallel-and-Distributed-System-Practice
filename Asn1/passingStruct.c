@@ -204,20 +204,6 @@ int main(int argc, char**argv) {
 			mythrD[i].passChunks[j] = mythrD[j].tempChunks[i];
 		}
 	}
-	/*Thread function*/
-	for (i = 0; i < ps; i++)
-	{
-		pthread_create(&ids[i],NULL,threadFn3,(void*)&(mythrD[i]));
-	}
-	
-	/*Barrier 4*/
-	pthread_barrier_wait(&mybarrier);
-
-	for (i=0; i < ps; i++) {
-		pthread_join(ids[i], NULL);
-   	}	
-
-	/* debbuging tempchunk */
 
 	for (i = 0; i< ps; i++)
 	{
@@ -233,7 +219,7 @@ int main(int argc, char**argv) {
 		}
 		printf("\n");
 	}
-	printf("Before printig thereChunk\n");
+	/*printf("Before printig thereChunk\n");
 	for (i = 0; i<ps; i++)
 	{
 		for (int j = 0; j<ps; j++)
@@ -255,16 +241,39 @@ int main(int argc, char**argv) {
 		}
 		printf("\n");
 	}
-	printf("\n");
-	/*for (i = 0; i<ps; i++)
+	printf("\n");*/
+	/*Thread function*/
+	for (i = 0; i < ps; i++)
+	{
+		pthread_create(&ids[i],NULL,threadFn4,(void*)&(mythrD[i]));
+	}
+	
+	/*Barrier 4*/
+	pthread_barrier_wait(&mybarrier);
+
+	for (i=0; i < ps; i++) {
+		pthread_join(ids[i], NULL);
+   	}	
+
+	/* debbuging tempchunk */
+
+	
+	printf("sub thread merge\n");
+	for (i = 0; i<ps; i++)
 	{
 		int totalSize = 0;
 		for (int j = 0; j<ps; j++)
 		{
 			totalSize = totalSize + mythrD[i].passLength[j];
-			for (int k = 0; k<subsize; k++)
+			for (int k = 0; k<totalSize; k++)
+			{
+				printf("%ld ", mythrD[i].passChunks[0][k]);
+			}
+			printf("\n");
 		}
-	}*/
+		printf("\n");
+	}
+	printf("\n");
 
 	/*legacy debugging*/
 	for (i =0; i < ps; i++)
@@ -326,7 +335,7 @@ void* threadFn3(void * chunkD) {
 	return NULL;
 }
 
-/*void* threadFn4(void * chunkD) {
+void* threadFn4(void * chunkD) {
 	thrD mychunkD = *(thrD *) chunkD;
 	int chunkSize = mychunkD.n/mychunkD.ps;
 	pthread_barrier_wait(&mybarrier);
@@ -338,7 +347,7 @@ void* threadFn3(void * chunkD) {
 	}
 	//merge(left, llength, right, rlength)
 	return NULL;
-}*/
+}
 
 int partition(long int *array,long int pivot, int size)
 {
@@ -415,8 +424,8 @@ void merge(long int *left, int llength, long int *right, int rlength)
 
 	long int *result = left;
 
-	memcpy(ltmp, left, llength * sizeof(int));
-	memcpy(rtmp, right, rlength * sizeof(int));
+	memcpy(ltmp, left, llength * sizeof(long int));
+	memcpy(rtmp, right, rlength * sizeof(long int));
 
 	while (llength > 0 && rlength > 0) {
 		if (*ll <= *rr) {

@@ -4,11 +4,11 @@
 #include <string.h>
 
 
-void merge(int *left, int llength, int *right, int rlength)
+void merge(long int *left, int llength, long int *right, int rlength)
 {
 	/* Temporary memory locations for the 2 segments of the array to merge. */
-	int *ltmp = (int *) malloc(llength * sizeof(int));
-	int *rtmp = (int *) malloc(rlength * sizeof(int));
+	long int *ltmp = (long int *) malloc(llength * sizeof(long int));
+	long int *rtmp = (long int *) malloc(rlength * sizeof(long int));
 
 	/*
 	 * Pointers to the elements being sorted in the temporary memory locations.
