@@ -17,7 +17,8 @@ typedef struct threadData{
 	long int *chunk;
 	long int *sample;
 	long int *pivotArray;
-	long int **tempChunk;
+	long int **passChunks;
+	long int **tempChunks;
 	int *sampleIndex;
 	int **indexGroup;
 	int pid;
@@ -31,6 +32,7 @@ int cmpfunc(const void*a, const void*b);
 void printArr(long int* arr, int size);
 void* threadFn1(void * chunkD);
 void* threadFn3(void * chunkD);
+void merge(int *left, int llength, int *right, int rlength);
 
 int main(int argc, char**argv) {
 	
@@ -53,8 +55,9 @@ int main(int argc, char**argv) {
 		mythrD[i].sample = (long int *) malloc(sizeof(long int)*ps);
 		mythrD[i].sampleIndex =(int *) malloc(sizeof(int)*(ps-1));
 		mythrD[i].pivotArray =(long int *) malloc(sizeof(long int)*(ps-1));
-		mythrD[i].tempChunk = (long int **) malloc(sizeof(long int*)*ps);
+		mythrD[i].tempChunks = (long int **) malloc(sizeof(long int*)*ps);
 		mythrD[i].indexGroup = (int**) malloc(sizeof(int*)*ps);
+		mythrD[i].passChunks = (long int **) malloc(sizeof(long int*)*ps);
 		for (int j = 0; j<ps; j++)
 		{
 			mythrD[i].indexGroup[j] = (int *) malloc(sizeof(int)*2);
@@ -178,13 +181,40 @@ int main(int argc, char**argv) {
 	printf("\n");
 
 	/*Phase 4*/
-	/*for (i = 0; i<ps; i++)
+	
+	for (i = 0; i<ps; i++)
+	{
+		for(int j = 0; j<ps; j++)
+		{
+			int subsize = mythrD[i].indexGroup[j][1]-mythrD[i].indexGroup[j][0]+1;
+			int start = mythrD[i].indexGroup[j][0];
+			mythrD[i].tempChunks[j] = (long int*) malloc(sizeof(long int)*subsize);
+			memcpy(mythrD[i].tempChunks[j], &mythrD[i].chunk[start], subsize*sizeof(long int));
+		}
+	}
+	
+	for (i = 0; i<ps; i++)
 	{
 		for (int j = 0; j<ps; j++)
 		{
-			mythrD
+			mythrD[i].passChunks[j] = mythrD[j].tempChunks[i];
 		}
-	}*/
+	}
+	
+	/* debbuging tempchunk */
+	for (i = 0; i<ps; i++)
+	{
+		for (int j = 0; j<ps; j++)
+		{
+			int subsize = mythrD[i].indexGroup[j][1]-mythrD[i].indexGroup[j][0]+1;
+			for(int k = 0; k<subsize; k++)
+			{
+				printf("%ld ", mythrD[i].tempChunks[j][k]);
+			}
+			printf("\n");
+		}
+		printf("\n");
+	}
 
 	/*legacy debugging*/
 	for (i =0; i < ps; i++)
@@ -276,16 +306,18 @@ void multiplePartition(long int *array,long int * pivot_array, int* stored_index
 		}
 		else if (i == size3-1)
 		{
-			indexGroup[i][0] = stored_index_array[i-1];
+			indexGroup[i][0] = stored_index_array[i-1]+1;
 			indexGroup[i][1] = size-1;
 		}
 		else
 		{
-			indexGroup[i][0] = stored_index_array[i-1];
+			indexGroup[i][0] = stored_index_array[i-1]+1;
 			indexGroup[i][1] = stored_index_array[i];
 		}
 	}
 }
+
+
 
 void printArr(long int* arr, int size)
 {
@@ -303,6 +335,56 @@ void printArr(long int* arr, int size)
 	    }
 	}
 }
+
+/*
+ * Merge Algorithm got from:
+ * https://github.com/markwkm/mergesort/blob/master/mergesort.c
+ */
+
+void merge(int *left, int llength, int *right, int rlength)
+{
+	int *ltmp = (int *) malloc(llength * sizeof(int));
+	int *rtmp = (int *) malloc(rlength * sizeof(int));
+
+	int *ll = ltmp;
+	int *rr = rtmp;
+
+	int *result = left;
+
+	memcpy(ltmp, left, llength * sizeof(int));
+	memcpy(rtmp, right, rlength * sizeof(int));
+
+	while (llength > 0 && rlength > 0) {
+		if (*ll <= *rr) {
+			*result = *ll;
+			++ll;
+			--llength;
+		} else {
+			*result = *rr;
+			++rr;
+			--rlength;
+		}
+		++result;
+	}
+	if (llength > 0)
+		while (llength > 0) {
+			*result = *ll;
+			++result;
+			++ll;
+			--llength;
+		}
+	else
+		while (rlength > 0) {
+			*result = *rr;
+			++result;
+			++rr;
+			--rlength;
+		}
+
+	free(ltmp);
+	free(rtmp);
+}
+
 
 int cmpfunc(const void*a, const void*b)
 {

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int cmpfunc(const void*a, const void*b)
 {
@@ -21,6 +22,8 @@ int partition(long int *array,long int pivot, int size)
 
 void multiplePartition(long int *array,long int * pivot_array, int* stored_index_array, int** index_group, int size, int size2, int size3)
 {
+	long int ** checkedArray = (long int **) malloc(sizeof(long int*)*size3);
+	long int a[3] = {1,2,34};
 	for (int i = 0; i < size2; i++)
 	{
 		int stored_index = 0;
@@ -36,15 +39,22 @@ void multiplePartition(long int *array,long int * pivot_array, int* stored_index
 		}
 		else if (i == size3-1)
 		{
-			index_group[i][0] = stored_index_array[i];
+			index_group[i][0] = stored_index_array[i-1]+1;
 			index_group[i][1] = size-1;
 		}
 		else
 		{
-			index_group[i][0] = stored_index_array[i];
+			index_group[i][0] = stored_index_array[i-1]+1;
 			index_group[i][1] = stored_index_array[i];
 		}
 	}
+	checkedArray[0] = (long int *) malloc(sizeof(long int)*2);
+	memcpy(checkedArray[0],&a[1], 2*sizeof(long int));
+	for (int i = 0; i<2; i++)
+	{
+		printf("%ld ",checkedArray[0][i]);
+	}
+	printf("\n");
 }
 
 int main()
