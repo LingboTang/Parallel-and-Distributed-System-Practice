@@ -19,7 +19,7 @@ typedef struct threadData{
 	long int *pivotArray;
 	long int **passChunks;
 	int *passLength;
-	//long int *returnArray;
+	long int *returnArray;
 	int returnLength;
 	long int **tempChunks;
 	int *sampleIndex;
@@ -75,7 +75,7 @@ int main(int argc, char**argv) {
 	
 
 	long int * array = (long int *) malloc(sizeof(long int)*numbers);
-	//long int * pivot = (long int *) malloc(sizeof(long int)*(ps-1));
+	long int * result = (long int *) malloc(sizeof(long int)*numbers);
 	
 	pthread_t ids[ps];
 
@@ -89,22 +89,21 @@ int main(int argc, char**argv) {
 
 	for (i = 0; i < numbers; i++)
 	{
-        	array[i] = random()%100;
+        	array[i] = random();
     }
 
 
+	clock_t begin1 = clock();
 	/*Phase 1*/
 	for (i = 0; i < ps; i++)
 	{
 		data[i] = (long int*) malloc(sizeof(long int)*chunkSize);
 		memcpy(data[i],&array[i*chunkSize], chunkSize*sizeof(long int));
 		mythrD[i].chunk = data[i];
-	}	
-	
-	for (i =0; i < ps; i++)
-	{
-		printArr(mythrD[i].chunk, chunkSize);
 	}
+	clock_t end1 = clock();	
+	double time_spent1 = (double)(end1 - begin1) / CLOCKS_PER_SEC;
+	printf("time spent 1: %f\n",time_spent1);	
 
 	for (i=0; i < ps; i++) {
         pthread_create(&ids[i], NULL, threadFn1, (void*)&(mythrD[i]));
@@ -118,11 +117,15 @@ int main(int argc, char**argv) {
    	}
 
 	/*Phase 2*/
+	clock_t begin2 = clock();
 	for (i = 0; i < ps; i++) {
 		memcpy(&g_samples[i*ps], mythrD[i].sample, ps*sizeof(long int));
 	}
 
 	qsort(g_samples,ps*ps,sizeof(long int),cmpfunc);
+	clock_t end2 = clock();	
+	double time_spent2 = (double)(end2 - begin2) / CLOCKS_PER_SEC;
+	printf("time spent 2: %f\n",time_spent2);
 
 
 	for(i = 0; i< ps; i++)
@@ -134,6 +137,7 @@ int main(int argc, char**argv) {
 	}
 
 	/*Phase 3*/
+	clock_t begin3 = clock();
 	for (i = 0; i < ps; i++)
 	{
 		pthread_create(&ids[i],NULL,threadFn3,(void*)&(mythrD[i]));
@@ -144,50 +148,14 @@ int main(int argc, char**argv) {
 
 	for (i=0; i < ps; i++) {
 		pthread_join(ids[i], NULL);
-   	}	
+   	}
+	clock_t end3 = clock();
+	double time_spent3 = (double)(end3 - begin3) / CLOCKS_PER_SEC;
+	printf("time spent 3: %f\n",time_spent3);	
 
-	/*Debugginig phase 3*/
-	/*printf("Gathered Samples\n");
-	for (int i = 0; i < ps*ps; i++)
-	{
-		
-		printf("%ld ",g_samples[i]);
-	}
-	
-	printf("\nPivots\n");
-	for (int j = 0; j<ps-1; j++)
-	{
-		printf("%ld ",mythrD[0].pivotArray[j]);	
-	}
-	printf("\n");
-
-	printf("Picked Index\n");
-	for (i = 0; i<ps; i++)
-	{
-		for (int j = 0; j<ps-1; j++)
-		{
-			printf("%d ",mythrD[i].sampleIndex[j]);
-		}
-		printf("\n");
-	}
-	printf("\n");
-
-	for (i =0; i<ps; i++)
-	{
-		printf("This thread: \n");
-		for(int j = 0; j< ps; j++)
-		{
-			for (int k = 0; k < ps-1; k++)
-			{
-				printf("%d ", mythrD[i].indexGroup[j][k]);
-			}
-		}
-		printf("\n");
-	}
-	printf("\n");*/
 
 	/*Phase 4*/
-	
+	clock_t begin4 = clock();
 	for (i = 0; i<ps; i++)
 	{
 		for(int j = 0; j<ps; j++)
@@ -208,44 +176,6 @@ int main(int argc, char**argv) {
 		}
 	}
 
-	for (i = 0; i< ps; i++)
-	{
-		for (int j =0; j<ps; j++)
-		{
-			int subsize = mythrD[j].indexGroup[i][1]-mythrD[j].indexGroup[i][0]+1;
-			
-			for(int k = 0; k<subsize; k++)
-			{
-				printf("%ld ", mythrD[i].passChunks[j][k]);
-			}
-			printf("\n");
-		}
-		printf("\n");
-	}
-	printf("Before printig thereChunk\n");
-	for (i = 0; i<ps; i++)
-	{
-		for (int j = 0; j<ps; j++)
-		{
-			int subsize = mythrD[i].indexGroup[j][1]-mythrD[i].indexGroup[j][0]+1;
-			for(int k = 0; k<subsize; k++)
-			{
-				printf("%ld ", mythrD[i].tempChunks[j][k]);
-			}
-			printf("\n");
-		}
-		printf("\n");
-	}
-	for (i = 0; i<ps; i++)
-	{
-		for (int j = 0; j<ps; j++)
-		{
-			printf("%d ",mythrD[i].passLength[j]);
-		}
-		printf("\n");
-	}
-	printf("\n");
-
 	for (i = 0; i<ps; i++)
 	{
 		for (int j = 0; j<ps; j++)
@@ -254,10 +184,15 @@ int main(int argc, char**argv) {
 		}
 	}
 
+	for (i = 0; i<ps; i++)
+	{
+		mythrD[i].returnArray = (long int *) malloc(sizeof(long int)*mythrD[i].returnLength);
+	}
+	
 	/*Thread function*/
 	for (i = 0; i < ps; i++)
 	{
-		pthread_create(&ids[i],NULL,threadFn3,(void*)&(mythrD[i]));
+		pthread_create(&ids[i],NULL,threadFn4,(void*)&(mythrD[i]));
 	}
 	
 	/*Barrier 4*/
@@ -267,36 +202,23 @@ int main(int argc, char**argv) {
 		pthread_join(ids[i], NULL);
    	}	
 
-	/* debbuging tempchunk */
-
 	
-	printf("sub thread merge\n");
-	/*for (i = 0; i<ps; i++)
-	{
-		int totalSize = 0;
-		for (int j = 0; j<ps; j++)
-		{
-			totalSize = totalSize + mythrD[i].passLength[j];
-			for (int k = 0; k<totalSize; k++)
-			{
-				printf("%ld ", mythrD[i].passChunks[0][k]);
-			}
-			printf("\n");
-		}
-		printf("\n");
-	}*/
-	printf("\n");
-
-	/*legacy debugging*/
-	for (i =0; i < ps; i++)
-	{
-		printArr(mythrD[i].chunk, chunkSize);
-	}
 	/*Phase final*/
 
 	pthread_barrier_destroy(&mybarrier);
+	int tmpLen =0;
+	for(int i = 0; i<ps; i++)
+	{
+		memcpy(&result[i*chunkSize],mythrD[i].returnArray,chunkSize*sizeof(long int));
+	}
+	clock_t end4 = clock();
+	double time_spent4 = (double)(end4 - begin4) / CLOCKS_PER_SEC;
+	printf("time spent 4: %f\n",time_spent4);
+	
+	
 
 	free((void *) array);
+	free(result);
 	for (i = 0; i < ps; i++)
 	{
 		free((void*)data[i]);
@@ -311,8 +233,11 @@ int main(int argc, char**argv) {
 		for (int j = 0; j<ps; j++)
 		{
 			free(mythrD[i].indexGroup[j]);
+			free(mythrD[i].tempChunks[j]);
+			free(mythrD[i].passChunks[j]);
 		}
 		free(mythrD[i].indexGroup);
+		free(mythrD[i].passLength);
 	}
 	free((void*)mythrD);
 	free(g_samples);
@@ -326,8 +251,6 @@ void* threadFn1(void * chunkD) {
 	int off_set = mychunkD.n/(mychunkD.ps*mychunkD.ps);
 	int chunkSize = mychunkD.n/mychunkD.ps;
 	int sampleSize = chunkSize/off_set;
-	//int wait_sec = 1 + rand() % 2;
-	//sleep(wait_sec);
 	pthread_barrier_wait(&mybarrier);
 	qsort(mychunkD.chunk,chunkSize,sizeof(long int),cmpfunc);
 	for (int i = 0; i < sampleSize; i++)
@@ -335,7 +258,6 @@ void* threadFn1(void * chunkD) {
 		int sample = mychunkD.chunk[i*off_set];
 		mychunkD.sample[i] = sample;
 	}
-	//sleep(wait_sec);
 	return NULL;
 }
 
@@ -351,6 +273,13 @@ void* threadFn4(void * chunkD) {
 	thrD mychunkD = *(thrD *) chunkD;
 	int chunkSize = mychunkD.n/mychunkD.ps;
 	pthread_barrier_wait(&mybarrier);
+	memcpy(mychunkD.returnArray,mychunkD.passChunks[0],mychunkD.passLength[0]);
+	int tmpLen = 0;
+	for (int i = 0; i<mychunkD.ps; i++)
+	{
+		memcpy(&mychunkD.returnArray[tmpLen],mychunkD.passChunks[i],sizeof(long int)*mychunkD.passLength[i]);	
+		tmpLen = tmpLen+mychunkD.passLength[i];
+	}
 	return NULL;
 }
 
@@ -468,4 +397,3 @@ int cmpfunc(const void*a, const void*b)
 {
 	return (*(long int*)a - *(long int*)b);
 }
-

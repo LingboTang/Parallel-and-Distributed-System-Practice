@@ -1,4 +1,4 @@
 bar: clean
-	 gcc -std=gnu99 -o pass passingStruct.c -pthread -g
+	 gcc -std=gnu99 -o psrs psrs.c -pthread -g
 clean:
-	rm -rf core pass *~
+	rm -rf core a.out psrs *~

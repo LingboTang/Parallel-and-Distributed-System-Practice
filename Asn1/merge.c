@@ -94,11 +94,11 @@ int main()
 		finalCount--;
 		len = len+3;
 	}
-	/*for (int i = 0; i<3; i++)
+	for (int i = 0; i<3; i++)
 	{
-		merge(array[0],len,array[i+1],3);
+		merge(array[0],len,array[i],3);
 		len = len + i*3;
-	}*/
+	}
 	//merge(array[0],3,array[1],3);
 	//merge(array[0],6,array[2],3);
 	for (int i=0; i<9;i++)
