@@ -11,6 +11,9 @@
 # Mac Caches
 *_Store
 
+# MPI Generator
+*.dSYM/
+
 # Linux Gedit Caches
 *.swp
 *~

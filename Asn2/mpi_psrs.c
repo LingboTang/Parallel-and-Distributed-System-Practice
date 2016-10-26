@@ -42,11 +42,11 @@ int main(int argc, char *argv[])
 
     
     /* Global Variables */
-    int N, thrN, taskid;
+    MPI_Init(&argc, &argv);
+    int N, thrN, taskid, iter;
     char * outputFilename;
     FILE * outfp;
 
-    printf("How many arguments?: %d\n",argc);
     /* N, P and output get from Command line */
     if (argc < 4)
     {
@@ -68,32 +68,25 @@ int main(int argc, char *argv[])
         randArray[i] = random()%36;
     }
 
-    MPI_Init(&argc, &argv);
     
-    MPI_Comm_size(MPI_COMM_WORLD, &thrN);
+    MPI_Comm_size(MPI_COMM_WORLD, &iter);
     MPI_Comm_rank(MPI_COMM_WORLD,&taskid);
 
     printArr(randArray, N);
-    printf("This is Length of Origin Array: %d\n", thrN);
-    
+
+
     /* Start */
-    printf("Before iter\n");
-    for (int i = 0; i < thrN - 1; i++)
+    for (int i = 0; i < thrN; i++)
     {
-        printf("In iter\n");
 
         memset(subRand, 0, N/thrN * sizeof(long int));
-        if (taskid == MASTER) {
-            MPI_Scatter(randArray, N/thrN, MPI_LONG, subRand, N/thrN, MPI_LONG, MASTER, MPI_COMM_WORLD);
-        }
+        //if (taskid == MASTER) {
+        MPI_Scatter(randArray, N/thrN, MPI_LONG, subRand, N/thrN, MPI_LONG, MASTER, MPI_COMM_WORLD);
+        //}
 
         qsort(subRand, N/thrN, sizeof(long int), cmpfunc);    
-        printf("taskid: %d \n", taskid);
-        printArr(subRand, N/thrN);
 
     }
-    printf("After iter\n");
-
 
     MPI_Finalize();    
     free(randArray);
