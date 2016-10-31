@@ -1,5 +1,5 @@
 run:build
-	mpirun -np 10 mpi_psrs 36 3 output.txt
+	mpirun -np 3 mpi_psrs 36 3 output.txt
 build: clean
 	mpicc -O1 -w -o mpi_psrs mpi_psrs.c -pthread -g
 clean:

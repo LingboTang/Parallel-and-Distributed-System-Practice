@@ -65,26 +65,24 @@ int main(int argc, char *argv[])
 
     for (int i = 0; i < N; i++)
     {
-        randArray[i] = random()%36;
+        randArray[i] = random()%1000;
     }
 
     
     MPI_Comm_size(MPI_COMM_WORLD, &iter);
     MPI_Comm_rank(MPI_COMM_WORLD,&taskid);
 
-    printArr(randArray, N);
 
 
     /* Start */
-    for (int i = 0; i < thrN; i++)
+    for (int i = 0; i < iter; i++)
     {
 
         memset(subRand, 0, N/thrN * sizeof(long int));
-        //if (taskid == MASTER) {
         MPI_Scatter(randArray, N/thrN, MPI_LONG, subRand, N/thrN, MPI_LONG, MASTER, MPI_COMM_WORLD);
-        //}
 
-        qsort(subRand, N/thrN, sizeof(long int), cmpfunc);    
+        qsort(subRand, N/thrN, sizeof(long int), cmpfunc);
+        printArr(subRand,N/thrN);    
 
     }
 

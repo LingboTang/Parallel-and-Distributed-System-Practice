@@ -1,0 +1,7 @@
+Install mpich
+Configure
+scp cpi ubuntu@hostname
+Add ip configure in the etc/host in remote instance
+file for mpi run
+mpirun -np 6 -f hosts /home/ubuntu/cpi
+ 
