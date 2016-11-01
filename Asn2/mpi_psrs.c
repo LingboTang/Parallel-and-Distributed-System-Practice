@@ -32,10 +32,13 @@ int cmpfunc(const void*a, const void*b)
 }
 
 
-void phase1() 
+/*void phase1(long int * origin, long int*sub, long int**subs, long int *samplePivot, int oriSize, int numThr, int myiter) 
 {
-
-}
+    memset(sub, 0, oriSize/numThr * sizeof(long int));
+    MPI_Scatter(origin, oriSize/numThr, MPI_LONG, sub, oriSize/numThr, MPI_LONG, MASTER, MPI_COMM_WORLD);
+    qsort(sub, oriSize/numThr, sizeof(long int), cmpfunc);
+    subs[myiter] = sub;
+}*/
 
 int main(int argc, char *argv[])
 {
@@ -61,6 +64,14 @@ int main(int argc, char *argv[])
     /* Init the test array*/
     long int * randArray = (long int *) malloc(sizeof(long int)*N);
     long int * subRand = (long int *) malloc(sizeof(long int)*N/thrN);
+    long int ** subRands = (long int **) malloc(sizeof(long int*)*thrN);
+    for (int i = 0; i < thrN; i++)
+    {
+        subRands[i] = (long int *) malloc(sizeof(long int) * N/thrN);
+    }
+    long int * samples = (long int*) malloc(sizeof(long int) * thrN);
+    long int * samplePivot = (long int *) malloc(sizeof(long int)*(thrN*thrN));
+
     srandom(MYSEED);
 
     for (int i = 0; i < N; i++)
@@ -68,10 +79,8 @@ int main(int argc, char *argv[])
         randArray[i] = random()%1000;
     }
 
-    
     MPI_Comm_size(MPI_COMM_WORLD, &iter);
     MPI_Comm_rank(MPI_COMM_WORLD,&taskid);
-
 
 
     /* Start */
@@ -79,16 +88,30 @@ int main(int argc, char *argv[])
     {
 
         memset(subRand, 0, N/thrN * sizeof(long int));
+        memset(samples, 0, thrN * sizeof(long int));
         MPI_Scatter(randArray, N/thrN, MPI_LONG, subRand, N/thrN, MPI_LONG, MASTER, MPI_COMM_WORLD);
-
         qsort(subRand, N/thrN, sizeof(long int), cmpfunc);
-        printArr(subRand,N/thrN);    
-
+        for (int j = 0; j<thrN; j++)
+        {
+            samples[j] = subRand[j*N/(thrN*thrN)];
+        }
+        for (int j = 0; j< thrN; j++)
+        {
+            memcpy(&samplePivot[j*thrN],samples,thrN*sizeof(long int));
+        }
+        printArr(samplePivot,thrN*thrN);
     }
 
     MPI_Finalize();    
     free(randArray);
     free(subRand);
+    for(int i = 0; i<thrN; i++)
+    {
+        free(subRands[i]);
+    }
+    free(subRands);
+    free(samples);
+    free(samplePivot);
     fclose(outfp);
     return 0;   
 }
