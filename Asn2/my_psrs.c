@@ -23,6 +23,23 @@ void printArr(long int* arr, int size)
     }
 }
 
+void printArrInt(int* arr, int size)
+{
+
+    for (int i = 0; i< size; i++)
+    {
+        if (i == 0)
+        {
+            printf("[ ");
+        }
+        printf("%d ",arr[i]);
+        if (i == size -1)
+        {
+            printf("]\n");
+        }
+    }
+}
+
 int isSorted(long int * arr, int size) {
     for (int i = 0; i<size -1; i++) {
         if (arr[i] > arr[i+1]) {
@@ -81,6 +98,7 @@ int main(int argc, char** argv) {
     long int subData[chunkSize];
     int offSet = N/(Nthr* Nthr);
     long int pivots[Nthr*Nthr];
+    int partIndex[Nthr];
 
     if (taskid == MASTER) {
         srandom(MYSEED);
@@ -90,7 +108,11 @@ int main(int argc, char** argv) {
         }
     }
 
+    for (int i =0; i< Nthr; i++) {
+        partIndex[i] = i*chunkSize;
+    }
 
+    printArrInt(partIndex, Nthr);
     if (taskid == MASTER) 
     {
         MPI_Scatter(testData, N/Nthr, MPI_LONG, subData, N/Nthr, MPI_LONG, MASTER, MPI_COMM_WORLD);
