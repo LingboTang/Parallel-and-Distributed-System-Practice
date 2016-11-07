@@ -1,58 +1,21 @@
 #include "psrs.h"
 
-#define MASTER 0
-#define MYSEED 23478237
 
-static long int * generateArray(long int * randArray,int N) {
-    srandom(MYSEED);
-    randArray = (long int *) malloc(sizeof(long int)*N);
-    for (int i = 0; i < N; i++)
-    {
-        randArray[i] = random()%1000;
-    }
-    return randArray;
-}
-
-void printArr(long int* arr, int size)
+int main(int argc, char ** argv)
 {
-
-    for (int i = 0; i< size; i++)
-    {
-        if (i == 0)
-        {
-            printf("[ ");
-        }
-        printf("%ld ",arr[i]);
-        if (i == size -1)
-        {
-            printf("]\n");
-        }
-    }
-}
-
-int cmpfunc(const void*a, const void*b)
-{
-    return (*(long int*)a - *(long int*)b);
-}
-
-/*void phase1(long int * origin, long int*sub, long int**subs, long int *samplePivot, int oriSize, int numThr, int myiter) 
-{
-    memset(sub, 0, oriSize/numThr * sizeof(long int));
-    MPI_Scatter(origin, oriSize/numThr, MPI_LONG, sub, oriSize/numThr, MPI_LONG, MASTER, MPI_COMM_WORLD);
-    qsort(sub, oriSize/numThr, sizeof(long int), cmpfunc);
-    subs[myiter] = sub;
-}*/
-
-
-int main(int argc, char *argv[])
-{
-
-    long int * randArray = NULL;
     /* Global Variables */
-    MPI_Init(&argc, &argv);
-    int N, thrN, taskid, iter;
     char * outputFilename;
     FILE * outfp;
+    int N, size, rank, thrN;
+    char hname[256];
+
+
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WOLRD, &size);
+    MPI_Comm_rank(MPI_COMM_WOLRD, &rank);
+    /*if (rank == MASTER) {
+        fprintf()
+    }*/    
 
     /* N, P and output get from Command line */
     if (argc < 4)
@@ -66,7 +29,7 @@ int main(int argc, char *argv[])
     outfp = fopen(outputFilename,"w");
 
     /* Init the test array*/
-    //long int * randArray = (long int *) malloc(sizeof(long int)*N);
+    long int * randArray = (long int *) malloc(sizeof(long int)*N);
     long int * subRand = (long int *) malloc(sizeof(long int)*N/thrN);
     long int ** subRands = (long int **) malloc(sizeof(long int*)*thrN);
     for (int i = 0; i < thrN; i++)
@@ -76,10 +39,14 @@ int main(int argc, char *argv[])
     long int * samples = (long int*) malloc(sizeof(long int) * thrN);
     long int * samplePivot = (long int *) malloc(sizeof(long int)*(thrN*thrN));
 
-    randArray = generateArray(randArray,N);
+    srandom(MYSEED);
 
-    MPI_Comm_size(MPI_COMM_WORLD, &iter);
-    MPI_Comm_rank(MPI_COMM_WORLD,&taskid);
+    for (int i = 0; i < N; i++)
+    {
+        randArray[i] = random()%1000;
+    }
+
+
 
     /* Start */
 
@@ -95,9 +62,9 @@ int main(int argc, char *argv[])
         samples[j] = subRand[j*N/(thrN*thrN)];
     }
     printArr(samples,thrN);
-    for (int i = 0; i<iter; i++)
+    for (int i = 0; i<size; i++)
     {
-        if (i == taskid)
+        if (i == rank)
         {
             memcpy(&samplePivot[taskid*thrN],samples,thrN*sizeof(long int));
         }
@@ -115,5 +82,7 @@ int main(int argc, char *argv[])
     free(samples);
     free(samplePivot);
     fclose(outfp);
-    return 0;   
+    return 0; 
+
+
 }
