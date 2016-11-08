@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
     if (argc != 3) {
         if (taskid == MASTER)
         {
-            fprintf(stderr, "Usage: ./psrsTest "" nInts outputfile\n");
+            fprintf(stderr, "Usage: ./mypsrs <N> <outputfile>\n");
         } 
         MPI_Finalize();
         exit(0);
@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
         MPI_Scatterv(testData, partLen, partIndex, MPI_LONG, testData, N/Nthr, MPI_LONG, MASTER, MPI_COMM_WORLD);
     }
     MPI_Barrier(MPI_COMM_WORLD);
-    
+
 
     qsort(testData,chunkSize,sizeof(long int), cmpfunc);
 
@@ -154,8 +154,7 @@ int main(int argc, char** argv) {
             Ind[i] = &pivots[i*Nthr];
             Len[i] = Nthr;
         }
-        printArr(Ind[2],Nthr);
-        printArrInt(Len,Nthr);
+
         /*long int tmp[Nthr*Nthr];
         multimerge(Ind, lengths, Nthr, tmp, Nthr*Nthr);
         for(int i =0; i<Nthr-1; i++) {
