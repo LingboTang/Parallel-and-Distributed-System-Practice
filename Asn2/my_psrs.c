@@ -124,6 +124,8 @@ int main(int argc, char** argv) {
     } else {
         MPI_Scatterv(testData, partLen, partIndex, MPI_LONG, testData, N/Nthr, MPI_LONG, MASTER, MPI_COMM_WORLD);
     }
+    MPI_Barrier(MPI_COMM_WORLD);
+    
 
     qsort(testData,chunkSize,sizeof(long int), cmpfunc);
 
@@ -146,19 +148,21 @@ int main(int argc, char** argv) {
 
     if (taskid == MASTER) {
         printArr(pivots,Nthr*Nthr);
-        /*int *Ind[Nthr];
+        int *Ind[Nthr];
         int Len[Nthr];
         for (int i = 0; i<Nthr; i++) {
             Ind[i] = &pivots[i*Nthr];
             Len[i] = Nthr;
         }
-        long int tmp[Nthr*Nthr];
+        printArr(Ind[2],Nthr);
+        printArrInt(Len,Nthr);
+        /*long int tmp[Nthr*Nthr];
         multimerge(Ind, lengths, Nthr, tmp, Nthr*Nthr);
         for(int i =0; i<Nthr-1; i++) {
             pivots[i] = tmp[(i+1)*Nthr];
         }*/
     }
-    
+
     /*MPI_Bcast(pivots,Nthr-1,MPI_LONG,MASTER,MPI_COMM_WORLD);
 
 
