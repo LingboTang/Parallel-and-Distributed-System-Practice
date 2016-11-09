@@ -18,15 +18,15 @@
 
 /* Modified code from http://stackoverflow.com/questions/10774566/merging-multiple-sorted-arrays-in-c */
 void multimerge(
-    long int ** arrays,      // arrays holding the data
-    int * arraysizes,    // sizes of the arrays in `arrays`
-    int number_of_arrays,            // number of arrays
-    long int * output               // pointer to output buffer
+    long int ** arrays,      
+    int * arraysizes,    
+    int number_of_arrays,            
+    long int * output               
 ){
-    int i = 0;       // output cursor
-    int j = 0;       // index for minimum search
-    int min;         // minimum in this iteration
-    int minposition; // position of the minimum
+    int i = 0;       
+    int j = 0;       
+    int min;         
+    int minposition; 
 
     // cursor for the arrays
     long int * cursor = calloc(number_of_arrays,sizeof(long int));
@@ -159,7 +159,7 @@ int main(int argc, char** argv) {
         srandom(MYSEED);
         for (int i = 0; i < N; i++)
         {
-            testData[i] = random()%40;
+            testData[i] = random()%1000;
         }
     }
 
@@ -195,6 +195,7 @@ int main(int argc, char** argv) {
     } else {
         MPI_Gather(pivots,Nthr,MPI_LONG,pivots,Nthr,MPI_LONG,MASTER,MPI_COMM_WORLD);
     }
+    MPI_Barrier(MPI_COMM_WORLD);
 
     if (taskid == MASTER) {
         long int *Ind[Nthr];
@@ -206,15 +207,15 @@ int main(int argc, char** argv) {
 
         long int tmp[Nthr*Nthr];
         multimerge(Ind,Len,Nthr,tmp);
-        //printArr(tmp, Nthr*Nthr);
         for(int i =0; i<Nthr-1; i++) {
             pivots[i] = tmp[(i+1)*Nthr];
         }
-        //printArr(pivots,Nthr-1);
     }
 
     MPI_Bcast(pivots,Nthr-1,MPI_LONG,MASTER,MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
 
+    //printArr(pivots,Nthr-1);
 
     int classStart[Nthr];
     int classLength[Nthr];
@@ -253,11 +254,14 @@ int main(int argc, char** argv) {
     // other processors all of its sorted values in the iprocessor^th class.  
     for(int iprocessor=0; iprocessor<Nthr; iprocessor++)
     {   
+        printf("Here is my \n");
         // Each processor, iprocessor gathers up the numproc lengths of the sorted
         // values in the iprocessor class
         MPI_Gather(&classLength[iprocessor], 1, MPI_INT, 
             recvLengths,1,MPI_INT,iprocessor,MPI_COMM_WORLD);
+        MPI_Barrier(MPI_COMM_WORLD);
     
+        printf("Gathered\n");
 
         // From these lengths the myid^th class starts are computed on
         // processor myid
@@ -275,8 +279,10 @@ int main(int argc, char** argv) {
         MPI_Gatherv(&testData[classStart[iprocessor]],
             classLength[iprocessor],MPI_LONG,
             recvbuffer,recvLengths,recvStarts,MPI_LONG,iprocessor,MPI_COMM_WORLD);
+        MPI_Barrier(MPI_COMM_WORLD);
     }
-        
+    
+    //printf("Something Here\n");    
     
     // multimerge these numproc lists on each processor
     long int *mmStarts[Nthr]; // array of list starts
@@ -291,23 +297,23 @@ int main(int argc, char** argv) {
         printArr(testData,N);    
     }*/
     
-    for (int i = 0; i< Nthr; i++) {
+    /*for (int i = 0; i< Nthr; i++) {
         printArr(mmStarts[i],recvLengths[i]);
-    }
+    }*/
     int mysendLength = recvStarts[Nthr-1] + recvLengths[Nthr-1];
     
 
     // PHASE VI:  Root processor collects all the data
 
 
-    int sendLengths[Nthr]; // lengths of consolidated classes
-    int sendStarts[Nthr];  // starting points of classes
-    // Root processor gathers up the lengths of all the data to be gathered
+    int sendLengths[Nthr]; 
+    int sendStarts[Nthr];  
+    
     MPI_Gather(&mysendLength,1,MPI_INT,
         sendLengths,1,MPI_INT,MASTER,MPI_COMM_WORLD);
 
 
-    // The root processor compute starts from lengths of classes to gather
+    
     if (taskid == 0)
     {
         sendStarts[0]=0;
@@ -317,17 +323,18 @@ int main(int argc, char** argv) {
         }   
     }
 
-    // Now we let processor #0 gather the pieces and glue them together in
-    // the right order
+    
     long int sortedData[N];
     MPI_Gatherv(tmpMerge,mysendLength,MPI_LONG,
         sortedData,sendLengths,sendStarts,MPI_LONG,MASTER,MPI_COMM_WORLD);    
     
-    
-    //MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
     // Finalize the MPI environment.
     if (taskid == 0) {
-        printArr(sortedData,N);
+        //printArr(sortedData,N);
+        if (isSorted(sortedData,N) == 1) {
+            printf("Is sorted Thanks my folks!\n");
+        }
     }
     MPI_Finalize();
     return 0;
