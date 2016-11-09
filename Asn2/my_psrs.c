@@ -15,6 +15,8 @@
 #include <stdlib.h>
 #include <limits.h>
 
+
+/* Modified code from http://stackoverflow.com/questions/10774566/merging-multiple-sorted-arrays-in-c */
 void multimerge(
     long int ** arrays,      // arrays holding the data
     int * arraysizes,    // sizes of the arrays in `arrays`
@@ -157,7 +159,7 @@ int main(int argc, char** argv) {
         srandom(MYSEED);
         for (int i = 0; i < N; i++)
         {
-            testData[i] = random()%1000;
+            testData[i] = random()%40;
         }
     }
 
@@ -178,7 +180,7 @@ int main(int argc, char** argv) {
     qsort(testData,chunkSize,sizeof(long int), cmpfunc);
 
     // Debug scatter
-    printArr(testData,chunkSize);
+    //printArr(testData,chunkSize);
     /*if (isSorted(testData,chunkSize) == 1) {
         printf("Sorted\n");
     }*/
@@ -204,73 +206,109 @@ int main(int argc, char** argv) {
 
         long int tmp[Nthr*Nthr];
         multimerge(Ind,Len,Nthr,tmp);
-        printArr(tmp, Nthr*Nthr);
+        //printArr(tmp, Nthr*Nthr);
         for(int i =0; i<Nthr-1; i++) {
             pivots[i] = tmp[(i+1)*Nthr];
         }
-        printArr(pivots,Nthr-1);
+        //printArr(pivots,Nthr-1);
     }
 
     MPI_Bcast(pivots,Nthr-1,MPI_LONG,MASTER,MPI_COMM_WORLD);
 
 
-    /*int tmpPart[Nthr];
-    int tmpLen[Nthr];
+    int classStart[Nthr];
+    int classLength[Nthr];
+    
+    // need for each processor to partition its list using the values
+    // of pivotbuffer
+    int dataindex=0;
+    for(int classindex=0; classindex<Nthr-1; classindex++)
+    {
+        classStart[classindex] = dataindex;
+        classLength[classindex]=0;
 
-    int di = 0;
-    int pi;
-    for (pi =0; pi<Nthr-1; pi++) {
-        tmpPart[pi] = di;
-        tmpLen[pi] = 0;
-
-        while ((di < tmpLen[taskid]) && (myData[di]<=pivots[pi]))
+        // as long as dataindex refers to data in the current class
+        while((dataindex< partLen[taskid]) 
+            && (testData[dataindex]<=pivots[classindex]))
         {
-            tmpLen[pi]++;
-            di++;
-        }    
+            classLength[classindex]++;
+            dataindex++;
+        }       
     }
+    // set Start and Length for last class
+    classStart[Nthr-1] = dataindex;
+    classLength[Nthr-1] = partLen[taskid] - dataindex;
+    /*printf("Start Mother Fucker\n");
+    printArrInt(classStart,Nthr);
+    printf("Length Mother Fucker\n");
+    printArrInt(classLength,Nthr);*/
 
-    tmpPart[Nthr-1] = di;
-    tmpLen[Nthr-1] = partLen - di;
+    
+    // PHASE V:  All ith classes are gathered by processor i 
+    long int recvbuffer[N];    // buffer to hold all members of class i
+    int recvLengths[Nthr];     // on myid, lengths of each myid^th class
+    int recvStarts[Nthr];      // indices of where to start the store from 0, 1, ...
 
+    // processor iprocessor functions as the root and gathers from the
+    // other processors all of its sorted values in the iprocessor^th class.  
+    for(int iprocessor=0; iprocessor<Nthr; iprocessor++)
+    {   
+        // Each processor, iprocessor gathers up the numproc lengths of the sorted
+        // values in the iprocessor class
+        MPI_Gather(&classLength[iprocessor], 1, MPI_INT, 
+            recvLengths,1,MPI_INT,iprocessor,MPI_COMM_WORLD);
+    
 
-    long int recv[N];
-    int recvLen[Nthr];
-    int recvInd[Nthr];
-
-    for (int which_id = 0; which_id < Nthr; which_id ++) {
-        MPI_Gather(tmpPart[Nthr], 1, MPI_LONG, recvLen,1,MPI_LONG,which_id,MPI_COMM_WORLD);
-
-        if (taskid == which_id) {
-            recvInd[0]=0;
-            for(int i =1; i<Nthr;i++) {
-                recvInd[i] = recvInd[i-1] + recvLen[i-1];
+        // From these lengths the myid^th class starts are computed on
+        // processor myid
+        if (taskid == iprocessor)
+        {
+            recvStarts[0]=0;
+            for(int i=1;i<Nthr; i++)
+            {
+                recvStarts[i] = recvStarts[i-1]+recvLengths[i-1];
             }
         }
 
-        MPI_Gatherv(testData[recvInd[which_id]],recvLen[which_id], MPI_LONG,recv,recvLen,recvInd,MPI_LONG,which_id,MPI_COMM_WORLD);
+        // each iprocessor gathers up all the members of the iprocessor^th 
+        // classes from the other nodes
+        MPI_Gatherv(&testData[classStart[iprocessor]],
+            classLength[iprocessor],MPI_LONG,
+            recvbuffer,recvLengths,recvStarts,MPI_LONG,iprocessor,MPI_COMM_WORLD);
     }
-
-    int *finalInd[Nthr]; // array of list starts
+        
+    
+    // multimerge these numproc lists on each processor
+    long int *mmStarts[Nthr]; // array of list starts
+    long int tmpMerge[N];
     for(int i=0;i<Nthr;i++)
     {
         mmStarts[i]=recvbuffer+recvStarts[i];
     }
-    multimerge(mmStarts,recvLengths,Nthr,myData,myDataSize);
+    multimerge(mmStarts,recvLengths,Nthr,tmpMerge);
     
+    /*if (taskid == MASTER) {
+        printArr(testData,N);    
+    }*/
+    
+    for (int i = 0; i< Nthr; i++) {
+        printArr(mmStarts[i],recvLengths[i]);
+    }
     int mysendLength = recvStarts[Nthr-1] + recvLengths[Nthr-1];
     
+
     // PHASE VI:  Root processor collects all the data
 
 
     int sendLengths[Nthr]; // lengths of consolidated classes
     int sendStarts[Nthr];  // starting points of classes
     // Root processor gathers up the lengths of all the data to be gathered
-    MPI::COMM_WORLD.Gather(&mysendLength,1,MPI::INT,
-        sendLengths,1,MPI::INT,0);
+    MPI_Gather(&mysendLength,1,MPI_INT,
+        sendLengths,1,MPI_INT,MASTER,MPI_COMM_WORLD);
+
 
     // The root processor compute starts from lengths of classes to gather
-    if (myid == 0)
+    if (taskid == 0)
     {
         sendStarts[0]=0;
         for(int i=1; i<Nthr; i++)
@@ -281,10 +319,16 @@ int main(int argc, char** argv) {
 
     // Now we let processor #0 gather the pieces and glue them together in
     // the right order
-    int sortedData[myDataSize];
-    MPI_Gatherv(testData,mysendLength,MPI_LONG,
-        sortedData,sendLengths,sendStarts,MPI_LONG,MASTER,MPI_COMM_WORLD);
-    // Finalize the MPI environment.*/
+    long int sortedData[N];
+    MPI_Gatherv(tmpMerge,mysendLength,MPI_LONG,
+        sortedData,sendLengths,sendStarts,MPI_LONG,MASTER,MPI_COMM_WORLD);    
+    
+    
+    //MPI_Barrier(MPI_COMM_WORLD);
+    // Finalize the MPI environment.
+    if (taskid == 0) {
+        printArr(sortedData,N);
+    }
     MPI_Finalize();
     return 0;
 }
