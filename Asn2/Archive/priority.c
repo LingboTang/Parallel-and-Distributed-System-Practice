@@ -45,6 +45,11 @@ void push (heap_t *h, int priority, long int *data) {
     h->nodes[i].data = data;
     h->len++;
 }
+
+void top(heap_t *h) {
+    
+}
+
  
 long int *pop (heap_t *h) {
     int i, j, k;
@@ -74,10 +79,11 @@ long int *pop (heap_t *h) {
     return data;
 }
  
-/*int main () {
+int main () {
     heap_t *h = (heap_t *)calloc(1, sizeof(heap_t));
     long int aa[3] = {341,512,112}; long int bb[3] = {111,41,352}; 
     long int cc[3] = {123,533,89};
+
     //long int*a = (long int *) calloc(2,sizeof(long int));
     //long int*b = (long int *) calloc(3,sizeof(long int));
     //long int*c = (long int *) calloc(4,sizeof(long int));
@@ -92,4 +98,4 @@ long int *pop (heap_t *h) {
         printArr(pop(h),3);   
     }
     return 0;
-}*/
+}

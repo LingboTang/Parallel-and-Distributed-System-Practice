@@ -5,10 +5,58 @@
 #include <math.h>
 #include <time.h>
 #include "mpi.h"
-#include "kway.h"
+//#include "kway.h"
 //#include "debug.h"
 #define MASTER 0
 #define MYSEED 23478237
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+
+void multimerge(
+    long int ** arrays,      // arrays holding the data
+    int * arraysizes,    // sizes of the arrays in `arrays`
+    int number_of_arrays,            // number of arrays
+    long int * output               // pointer to output buffer
+){
+    int i = 0;       // output cursor
+    int j = 0;       // index for minimum search
+    int min;         // minimum in this iteration
+    int minposition; // position of the minimum
+
+    // cursor for the arrays
+    long int * cursor = calloc(number_of_arrays,sizeof(long int));
+
+    if(cursor == NULL)
+        return;
+
+    while(1){
+        min = INT_MAX;
+        minposition = -1; // invalid position
+
+        // Go through the current positions and get the minimum
+        for(j = 0; j < number_of_arrays; ++j){
+
+            if(cursor[j] < arraysizes[j] &&  // ensure that the cursor is still valid
+               arrays[j][cursor[j]] < min){  // the element is smaller
+                min = arrays[j][cursor[j]];  // save the minimum ...
+                minposition = j;             // ... and its position
+            }
+        }
+
+        // if there is no minimum, then the position will be invalid
+
+        if(minposition == -1)
+            break;
+
+        // update the output and the specific cursor            
+        output[i++] = min;
+        cursor[minposition]++;
+    }
+    free(cursor);
+}
 
 void printArr(long int* arr, int size)
 {
@@ -147,25 +195,26 @@ int main(int argc, char** argv) {
     }
 
     if (taskid == MASTER) {
-        printArr(pivots,Nthr*Nthr);
-        int *Ind[Nthr];
+        long int *Ind[Nthr];
         int Len[Nthr];
         for (int i = 0; i<Nthr; i++) {
             Ind[i] = &pivots[i*Nthr];
             Len[i] = Nthr;
         }
 
-        /*long int tmp[Nthr*Nthr];
-        multimerge(Ind, lengths, Nthr, tmp, Nthr*Nthr);
+        long int tmp[Nthr*Nthr];
+        multimerge(Ind,Len,Nthr,tmp);
+        printArr(tmp, Nthr*Nthr);
         for(int i =0; i<Nthr-1; i++) {
             pivots[i] = tmp[(i+1)*Nthr];
-        }*/
+        }
+        printArr(pivots,Nthr-1);
     }
 
-    /*MPI_Bcast(pivots,Nthr-1,MPI_LONG,MASTER,MPI_COMM_WORLD);
+    MPI_Bcast(pivots,Nthr-1,MPI_LONG,MASTER,MPI_COMM_WORLD);
 
 
-    int tmpPart[Nthr];
+    /*int tmpPart[Nthr];
     int tmpLen[Nthr];
 
     int di = 0;
