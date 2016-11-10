@@ -142,19 +142,19 @@ int main(int argc, char** argv) {
     }
 
     /* Initialize test Array */
-    long int testData[N];
+    long int * testData = calloc(N, sizeof(long int));
     int chunkSize = N/Nthr;
     //long int subData[chunkSize];
     int offSet = N/(Nthr* Nthr);
-    long int pivots[Nthr*Nthr];
-    int partIndex[Nthr];
-    int partLen[Nthr];
+    long int * pivots = calloc(Nthr*Nthr, sizeof(long int));
+    int * partIndex = calloc(Nthr, sizeof(int));
+    int * partLen = calloc(Nthr, sizeof(int));
 
     if (taskid == MASTER) {
         srandom(MYSEED);
         for (int i = 0; i < N; i++)
         {
-            testData[i] = random()%1000;
+            testData[i] = random();
         }
     }
 
@@ -241,22 +241,22 @@ int main(int argc, char** argv) {
 
     
     // PHASE V:  All ith classes are gathered by processor i 
-    long int recvbuffer[N];    // buffer to hold all members of class i
-    int recvLengths[Nthr];     // on myid, lengths of each myid^th class
-    int recvStarts[Nthr];      // indices of where to start the store from 0, 1, ...
-
+    long int * recvbuffer = calloc(N,sizeof(long int));    
+    int recvLengths[Nthr];     
+    int recvStarts[Nthr];      
     // processor iprocessor functions as the root and gathers from the
     // other processors all of its sorted values in the iprocessor^th class.  
     for(int iprocessor=0; iprocessor<Nthr; iprocessor++)
     {   
-        printf("Here is my \n");
+        
         // Each processor, iprocessor gathers up the numproc lengths of the sorted
         // values in the iprocessor class
         MPI_Gather(&classLength[iprocessor], 1, MPI_INT, 
             recvLengths,1,MPI_INT,iprocessor,MPI_COMM_WORLD);
-        ／／MPI_Barrier(MPI_COMM_WORLD);
+
+        //MPI_Waitall(1,recvLengths,recvStatus);
+        MPI_Barrier(MPI_COMM_WORLD);
     
-        printf("Gathered\n");
 
         // From these lengths the myid^th class starts are computed on
         // processor myid
@@ -276,17 +276,17 @@ int main(int argc, char** argv) {
             recvbuffer,recvLengths,recvStarts,MPI_LONG,iprocessor,MPI_COMM_WORLD);
         MPI_Barrier(MPI_COMM_WORLD);
     }
-    
+    MPI_Barrier(MPI_COMM_WORLD);
     //printf("Something Here\n");    
     
     // multimerge these numproc lists on each processor
     long int *mmStarts[Nthr]; // array of list starts
-    long int tmpMerge[N];
+    //long int tmpMerge[N];
     for(int i=0;i<Nthr;i++)
     {
         mmStarts[i]=recvbuffer+recvStarts[i];
     }
-    multimerge(mmStarts,recvLengths,Nthr,tmpMerge);
+    multimerge(mmStarts,recvLengths,Nthr,testData);
     
     /*if (taskid == MASTER) {
         printArr(testData,N);    
@@ -306,7 +306,7 @@ int main(int argc, char** argv) {
     
     MPI_Gather(&mysendLength,1,MPI_INT,
         sendLengths,1,MPI_INT,MASTER,MPI_COMM_WORLD);
-
+    MPI_Barrier(MPI_COMM_WORLD);
 
     
     if (taskid == 0)
@@ -319,18 +319,24 @@ int main(int argc, char** argv) {
     }
 
     
-    long int sortedData[N];
-    MPI_Gatherv(tmpMerge,mysendLength,MPI_LONG,
+    long int * sortedData = calloc(N,sizeof(long int));
+    MPI_Gatherv(testData,mysendLength,MPI_LONG,
         sortedData,sendLengths,sendStarts,MPI_LONG,MASTER,MPI_COMM_WORLD);    
     
     MPI_Barrier(MPI_COMM_WORLD);
     // Finalize the MPI environment.
-    if (taskid == 0) {
+    /*if (taskid == 0) {
         //printArr(sortedData,N);
         if (isSorted(sortedData,N) == 1) {
             printf("Is sorted Thanks my folks!\n");
         }
-    }
+    }*/
+    free(testData);
+    free(recvbuffer);
+    free(sortedData);
+    free(pivots);
+    free(partIndex);
+    free(partLen);
     MPI_Finalize();
     return 0;
 }
