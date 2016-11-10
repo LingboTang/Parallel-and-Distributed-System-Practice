@@ -11,11 +11,6 @@
 #define MYSEED 23478237
 
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
-
-
 /* Modified code from http://stackoverflow.com/questions/10774566/merging-multiple-sorted-arrays-in-c */
 void multimerge(
     long int ** arrays,      
@@ -259,7 +254,7 @@ int main(int argc, char** argv) {
         // values in the iprocessor class
         MPI_Gather(&classLength[iprocessor], 1, MPI_INT, 
             recvLengths,1,MPI_INT,iprocessor,MPI_COMM_WORLD);
-        MPI_Barrier(MPI_COMM_WORLD);
+        ／／MPI_Barrier(MPI_COMM_WORLD);
     
         printf("Gathered\n");
 

@@ -3,6 +3,7 @@
 #include <math.h>
 #include <ctype.h>
 #include <string.h>
+#include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -29,7 +30,10 @@ void printArr(long int* arr, int size)
 }
 
 int main(int argc, char**argv) {
-	
+
+
+	struct timeval start;
+    struct timeval end;
 	if (argc != 2)
 	{
 		fprintf(stderr, "error: Not enough info!\n");
@@ -47,10 +51,10 @@ int main(int argc, char**argv) {
         	array[i] = random();
     }
 
-	clock_t begin = clock();
+	gettimeofday(&start, NULL);
 	qsort(array,numbers,sizeof(long int),cmpfunc);
-	clock_t end = clock();
-	double time_spent = (double) (end-begin) / CLOCKS_PER_SEC;
+	gettimeofday(&end, NULL);
+    double time_spent = (double)(end.tv_sec - start.tv_sec) * 1.0e6 + (double) (end.tv_usec - start.tv_usec);
 	
 	//printArr(array,numbers);
 	printf("time spent: %f\n",time_spent);
