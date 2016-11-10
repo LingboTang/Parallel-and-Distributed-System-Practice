@@ -1,8 +1,10 @@
 run:build
-	mpirun -np 8 mypsrs 400000000 output.txt
+	mpirun -np 4 mypsrs 20000000 output.txt
 build: clean
-	mpicc -O2 -w -o mypsrs my_psrs.c -pthread -g
+	mpicc -std=gnu99 -O2 -w -o mypsrs my_psrs.c -pthread -g
 
+qsort: clean
+	gcc -std=c99 -O2 -o qsort singleThread.c
 
 kway.o: kway.c kway.h
 		mpicc -c kway.c -o kway.o

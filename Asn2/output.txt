@@ -1,0 +1,1 @@
+MPI_Wtime measured time to be: 2.572790

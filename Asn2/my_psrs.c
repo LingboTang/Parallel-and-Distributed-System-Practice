@@ -108,6 +108,9 @@ int main(int argc, char** argv) {
     // Initialize the MPI environment
     MPI_Init(NULL, NULL);
     int taskid, N, Nthr;
+    double t_start, t_end;
+    char* FileName;
+    FILE * outf;
     MPI_Comm_size(MPI_COMM_WORLD, &Nthr);
     MPI_Comm_rank(MPI_COMM_WORLD, &taskid);
     
@@ -122,6 +125,8 @@ int main(int argc, char** argv) {
     }
 
     N = atoi(argv[1]);
+    FileName = argv[2];
+    outf = fopen(FileName,"w");
 
     if (N % Nthr != 0) {
         if (taskid == MASTER)
@@ -163,6 +168,9 @@ int main(int argc, char** argv) {
         partLen[i] = chunkSize;
     }
 
+    if (taskid == MASTER) {
+        t_start = MPI_Wtime();
+    } 
     if (taskid == MASTER) 
     {
         MPI_Scatterv(testData, partLen, partIndex, MPI_LONG, MPI_IN_PLACE, N/Nthr, MPI_LONG, MASTER, MPI_COMM_WORLD);
@@ -276,12 +284,11 @@ int main(int argc, char** argv) {
             recvbuffer,recvLengths,recvStarts,MPI_LONG,iprocessor,MPI_COMM_WORLD);
         MPI_Barrier(MPI_COMM_WORLD);
     }
-    MPI_Barrier(MPI_COMM_WORLD);
-    //printf("Something Here\n");    
+    //MPI_Barrier(MPI_COMM_WORLD);  
     
     // multimerge these numproc lists on each processor
-    long int *mmStarts[Nthr]; // array of list starts
-    //long int tmpMerge[N];
+    long int *mmStarts[Nthr]; 
+
     for(int i=0;i<Nthr;i++)
     {
         mmStarts[i]=recvbuffer+recvStarts[i];
@@ -324,6 +331,14 @@ int main(int argc, char** argv) {
         sortedData,sendLengths,sendStarts,MPI_LONG,MASTER,MPI_COMM_WORLD);    
     
     MPI_Barrier(MPI_COMM_WORLD);
+
+    if (taskid == MASTER) {
+        t_end = MPI_Wtime();
+    }
+
+    if (taskid == MASTER) {
+        fprintf(outf,"MPI_Wtime measured time to be: %f\n", t_end-t_start);
+    }
     // Finalize the MPI environment.
     /*if (taskid == 0) {
         //printArr(sortedData,N);
@@ -331,12 +346,15 @@ int main(int argc, char** argv) {
             printf("Is sorted Thanks my folks!\n");
         }
     }*/
+
+    MPI_Finalize();
+
     free(testData);
     free(recvbuffer);
     free(sortedData);
     free(pivots);
     free(partIndex);
     free(partLen);
-    MPI_Finalize();
+    fclose(outf);
     return 0;
 }

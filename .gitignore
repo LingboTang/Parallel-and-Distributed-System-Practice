@@ -15,7 +15,10 @@
 # MPI Generator
 *.dSYM/
 
+# SSH Key
+deploy.pem
+Asn2/deploy.pem
+
 # Linux Gedit Caches
 *.swp
 *~
-
