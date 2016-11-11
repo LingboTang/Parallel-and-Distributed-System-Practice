@@ -1,5 +1,5 @@
 run:build
-	mpirun -np 4 mypsrs 20000000 output.txt
+	mpirun -np 2 mypsrs 32000000 output.txt
 build: clean
 	mpicc -std=gnu99 -O2 -w -o mypsrs my_psrs.c -pthread -g
 

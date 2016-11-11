@@ -1,1 +1,4 @@
-MPI_Wtime measured time to be: 2.572790
+Phase1: 3.778275
+Phase2: 0.000255
+Phase3: 0.007634
+Phase4: 0.797053
