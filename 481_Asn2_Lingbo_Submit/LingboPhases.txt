@@ -1,0 +1,468 @@
+/* 64 */
+
+# 8 P #
+Phase1: 2.180295
+Phase2: 0.202353
+Phase3: 0.876523
+Phase4: 0.334302
+
+Phase1: 1.822201
+Phase2: 0.596020
+Phase3: 0.894731
+Phase4: 0.192437
+
+Phase1: 1.409253
+Phase2: 1.087589
+Phase3: 0.907483
+Phase4: 0.197515
+
+Phase1: 2.325779
+Phase2: 0.001929
+Phase3: 0.843270
+Phase4: 0.220253
+
+Phase1: 2.405649
+Phase2: 0.017573
+Phase3: 0.828603
+Phase4: 0.193522
+
+Phase1: 1.640685
+Phase2: 0.542628
+Phase3: 0.824712
+Phase4: 0.329505
+
+Phase1: 2.337895
+Phase2: 0.282504
+Phase3: 0.931015
+Phase4: 0.193895
+
+# 4 P #
+Phase1: 3.278534
+Phase2: 0.571264
+Phase3: 1.031731
+Phase4: 0.290946
+
+Phase1: 3.852548
+Phase2: 0.470830
+Phase3: 0.999380
+Phase4: 0.571318
+
+Phase1: 2.974790
+Phase2: 1.508082
+Phase3: 1.155754
+Phase4: 0.536167
+
+Phase1: 2.872857
+Phase2: 2.475040
+Phase3: 1.032947
+Phase4: 0.292494
+
+Phase1: 3.624739
+Phase2: 0.019343
+Phase3: 1.020828
+Phase4: 0.297105
+
+Phase1: 3.004676
+Phase2: 1.798202
+Phase3: 1.058713
+Phase4: 0.470737
+
+Phase1: 4.634328
+Phase2: 0.293991
+Phase3: 1.023382
+Phase4: 0.291070
+
+# 2 P #
+
+Phase1: 7.555259
+Phase2: 2.336983
+Phase3: 1.368109
+Phase4: 0.449946
+
+Phase1: 8.121330
+Phase2: 1.514690
+Phase3: 1.686142
+Phase4: 0.753428
+
+Phase1: 9.197902
+Phase2: 0.188966
+Phase3: 1.379671
+Phase4: 0.538086
+
+
+Phase1: 6.474146
+Phase2: 2.947472
+Phase3: 1.582414
+Phase4: 0.467752
+
+
+Phase1: 6.785523
+Phase2: 2.621936
+Phase3: 1.511090
+Phase4: 0.473634
+
+Phase1: 6.631045
+Phase2: 2.389779
+Phase3: 1.300614
+Phase4: 0.489576
+
+Phase1: 6.334962
+Phase2: 2.158413
+Phase3: 1.547942
+Phase4: 0.536413
+
+
+/* 32 */
+# 8 P #
+Phase1: 0.675563
+Phase2: 0.639585
+Phase3: 0.517139
+Phase4: 0.128369
+
+Phase1: 0.775004
+Phase2: 0.447111
+Phase3: 0.531712
+Phase4: 0.094398
+
+Phase1: 0.659276
+Phase2: 0.639857
+Phase3: 0.488698
+Phase4: 0.097699
+
+Phase1: 0.987002
+Phase2: 0.233405
+Phase3: 0.477004
+Phase4: 0.197585
+
+Phase1: 0.720584
+Phase2: 0.511756
+Phase3: 0.466975
+Phase4: 0.126464
+
+Phase1: 1.197263
+Phase2: 0.000731
+Phase3: 0.585964
+Phase4: 0.098931
+
+Phase1: 0.668071
+Phase2: 0.554277
+Phase3: 0.508887
+Phase4: 0.093619
+
+
+# 4 P #
+
+Phase1: 1.403424
+Phase2: 1.063671
+Phase3: 0.533906
+Phase4: 0.156597
+
+Phase1: 1.357443
+Phase2: 1.011577
+Phase3: 0.560978
+Phase4: 0.138742
+
+Phase1: 1.650300
+Phase2: 0.883576
+Phase3: 0.555089
+Phase4: 0.163789
+
+Phase1: 2.147917
+Phase2: 0.001617
+Phase3: 0.520599
+Phase4: 0.214457
+
+Phase1: 1.432451
+Phase2: 1.058057
+Phase3: 0.513114
+Phase4: 0.144248
+
+Phase1: 1.727652
+Phase2: 0.263485
+Phase3: 0.526982
+Phase4: 0.156199
+
+Phase1: 2.409941
+Phase2: 0.185861
+Phase3: 0.512435
+Phase4: 0.138357
+
+Phase1: 1.631260
+Phase2: 1.008082
+Phase3: 0.580834
+Phase4: 0.288813
+
+# 2 P #
+
+Phase1: 3.804120
+Phase2: 1.175699
+Phase3: 0.714643
+Phase4: 0.452357
+
+Phase1: 2.881380
+Phase2: 2.403924
+Phase3: 0.723047
+Phase4: 0.345755
+
+Phase1: 3.116724
+Phase2: 0.935454
+Phase3: 0.676919
+Phase4: 0.445383
+
+Phase1: 4.313495
+Phase2: 0.714190
+Phase3: 0.846670
+Phase4: 0.264832
+
+Phase1: 4.726857
+Phase2: 0.300283
+Phase3: 0.717056
+Phase4: 0.239239
+
+Phase1: 3.057608
+Phase2: 1.241975
+Phase3: 0.753615
+Phase4: 0.232430
+
+Phase1: 3.688147
+Phase2: 0.670269
+Phase3: 0.696643
+Phase4: 0.254112
+
+
+/* 16 */
+# 8 P #
+
+
+Phase1: 0.649719
+Phase2: 0.001463
+Phase3: 0.370511
+Phase4: 0.094489
+
+Phase1: 0.427946
+Phase2: 0.183484
+Phase3: 0.292595
+Phase4: 0.041396
+
+Phase1: 0.561973
+Phase2: 0.068178
+Phase3: 0.306530
+Phase4: 0.064294
+
+Phase1: 0.627969
+Phase2: 0.001013
+Phase3: 0.328521
+Phase4: 0.104115
+
+Phase1: 0.319533
+Phase2: 0.293998
+Phase3: 0.309391
+Phase4: 0.096931
+
+Phase1: 0.419540
+Phase2: 0.201001
+Phase3: 0.311510
+Phase4: 0.040359
+
+Phase1: 0.509900
+Phase2: 0.120685
+Phase3: 0.307840
+Phase4: 0.083862
+
+# 4 P #
+
+Phase1: 1.094660
+Phase2: 0.193739
+Phase3: 0.300030
+Phase4: 0.079177
+
+Phase1: 0.825462
+Phase2: 0.479255
+Phase3: 0.313892
+Phase4: 0.138882
+
+Phase1: 0.800382
+Phase2: 0.400813
+Phase3: 0.300573
+Phase4: 0.077483
+
+Phase1: 1.189761
+Phase2: 0.058467
+Phase3: 0.279870
+Phase4: 0.153739
+
+Phase1: 1.026363
+Phase2: 0.229334
+Phase3: 0.259161
+Phase4: 0.078317
+
+Phase1: 1.275079
+Phase2: 0.001225
+Phase3: 0.258413
+Phase4: 0.137052
+
+Phase1: 1.289704
+Phase2: 0.005135
+Phase3: 0.276417
+Phase4: 0.156787
+
+# 2 P#
+
+Phase1: 1.560918
+Phase2: 1.059684
+Phase3: 0.357633
+Phase4: 0.115323
+
+
+Phase1: 2.014478
+Phase2: 0.259309
+Phase3: 0.403862
+Phase4: 0.213799
+
+Phase1: 1.824728
+Phase2: 0.319462
+Phase3: 0.416890
+Phase4: 0.175330
+
+Phase1: 1.455248
+Phase2: 0.557780
+Phase3: 0.332165
+Phase4: 0.221093
+
+Phase1: 2.325813
+Phase2: 0.170461
+Phase3: 0.371816
+Phase4: 0.228143
+
+Phase1: 2.320798
+Phase2: 0.106050
+Phase3: 0.384991
+Phase4: 0.112333
+
+Phase1: 1.861595
+Phase2: 0.711565
+Phase3: 0.403410
+Phase4: 0.222266
+
+/* 8 */
+Phase1: 0.302344
+Phase2: 0.013736
+Phase3: 0.178358
+Phase4: 0.031529
+
+Phase1: 0.278033
+Phase2: 0.024575
+Phase3: 0.191313
+Phase4: 0.024814
+
+
+Phase1: 0.300515
+Phase2: 0.003568
+Phase3: 0.203705
+Phase4: 0.027832
+
+
+Phase1: 0.297280
+Phase2: 0.015213
+Phase3: 0.242974
+Phase4: 0.039213
+
+Phase1: 0.292220
+Phase2: 0.043118
+Phase3: 0.220717
+Phase4: 0.031463
+
+Phase1: 0.294023
+Phase2: 0.016761
+Phase3: 0.195756
+Phase4: 0.027610
+
+Phase1: 0.227888
+Phase2: 0.059011
+Phase3: 0.206489
+Phase4: 0.039389
+
+# 4 P #
+Phase1: 0.585893
+Phase2: 0.048066
+Phase3: 0.176747
+Phase4: 0.076631
+
+Phase1: 0.591798
+Phase2: 0.031521
+Phase3: 0.165576
+Phase4: 0.044828
+
+Phase1: 0.481151
+Phase2: 0.142452
+Phase3: 0.179099
+Phase4: 0.043664
+
+Phase1: 0.618944
+Phase2: 0.034651
+Phase3: 0.179207
+Phase4: 0.076350
+
+Phase1: 0.492449
+Phase2: 0.133128
+Phase3: 0.176508
+Phase4: 0.034348
+
+Phase1: 0.566624
+Phase2: 0.056997
+Phase3: 0.168210
+Phase4: 0.057212
+
+Phase1: 0.545934
+Phase2: 0.077100
+Phase3: 0.196997
+Phase4: 0.059245
+
+# 2 P #
+Phase1: 0.845038
+Phase2: 0.388459
+Phase3: 0.162070
+Phase4: 0.059593
+
+Phase1: 1.291198
+Phase2: 0.000727
+Phase3: 0.192145
+Phase4: 0.094970
+
+Phase1: 1.035549
+Phase2: 0.075199
+Phase3: 0.229514
+Phase4: 0.092544
+
+Phase1: 1.147415
+Phase2: 0.149520
+Phase3: 0.200891
+Phase4: 0.105073
+
+Phase1: 1.342470
+Phase2: 0.001104
+Phase3: 0.211457
+Phase4: 0.110451
+
+Phase1: 1.269418
+Phase2: 0.014606
+Phase3: 0.135794
+Phase4: 0.121122
+
+Phase1: 1.299467
+Phase2: 0.000594
+Phase3: 0.188431
+Phase4: 0.109549
+
+
+
+
+
+
+
+
+
+
+
+
+
