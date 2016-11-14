@@ -99,22 +99,6 @@ int isSorted(long int * arr, int size) {
     return 1;
 }
 
-int binarySearch(long int *arr, long int l, long int r, long int x)
-{
-   if (r >= l)
-   {
-        int mid = l + (r - l)/2;
-
-        if (arr[mid] == x)  return mid;
-
-        if (arr[mid] > x) return binarySearch(arr, l, mid-1, x);
-
-        return binarySearch(arr, mid+1, r, x);
-   }
-
-   return -1;
-}
-
 int cmpfunc(const void*a, const void*b)
 {
     return (*(long int*)a - *(long int*)b);
@@ -125,8 +109,8 @@ int main(int argc, char** argv) {
     MPI_Init(NULL, NULL);
     int taskid, N, Nthr;
     double t_start, t_end;
-    char* FileName;
-    FILE * outf;
+    //char* FileName;
+    //FILE * outf;
     MPI_Comm_size(MPI_COMM_WORLD, &Nthr);
     MPI_Comm_rank(MPI_COMM_WORLD, &taskid);
     
@@ -135,21 +119,19 @@ int main(int argc, char** argv) {
         if (taskid == MASTER)
         {
             fprintf(stderr, "Usage: ./mypsrs <N> <outputfile>\n");
-            fflush(stderr);
         } 
         MPI_Finalize();
         exit(0);
     }
 
     N = atoi(argv[1]);
-    FileName = argv[2];
-    outf = fopen(FileName,"w");
+    //FileName = argv[2];
+    //outf = fopen(FileName,"w");
 
     if (N % Nthr != 0) {
         if (taskid == MASTER)
         {
             fprintf(stderr, "Total must be divided evenly for analysis purpose\n");
-            fflush(stderr);
         } 
         MPI_Finalize();
         exit(1);
@@ -159,7 +141,6 @@ int main(int argc, char** argv) {
         if (taskid == MASTER)
         {
             fprintf(stderr, "Total must be divided evenly for analysis purpose\n");
-            fflush(stderr);
         } 
         MPI_Finalize();
         exit(2);
@@ -178,7 +159,7 @@ int main(int argc, char** argv) {
         srandom(MYSEED);
         for (int i = 0; i < N; i++)
         {
-            testData[i] = random()%100;
+            testData[i] = random();
         }
     }
 
@@ -187,7 +168,6 @@ int main(int argc, char** argv) {
         partLen[i] = chunkSize;
     }
 
-    /* Phase 1 */
     if (taskid == MASTER) {
         t_start = MPI_Wtime();
     } 
@@ -199,13 +179,11 @@ int main(int argc, char** argv) {
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
+    if (taskid == MASTER) {
+        t_start = MPI_Wtime();
+    } 
 
     qsort(testData,chunkSize,sizeof(long int), cmpfunc);
-
-    if (taskid == MASTER) {
-        t_end = MPI_Wtime();
-        fprintf(outf,"Phase1: %f\n", t_end-t_start);
-    }
 
     // Debug scatter
     //printArr(testData,chunkSize);
@@ -213,10 +191,6 @@ int main(int argc, char** argv) {
         printf("Sorted\n");
     }*/
 
-    /* Phase 2 */
-    if (taskid == MASTER) {
-        t_start = MPI_Wtime();
-    } 
     for (int i = 0; i<Nthr; i++) {
         pivots[i] = testData[i*offSet];
     }
@@ -244,59 +218,40 @@ int main(int argc, char** argv) {
         }
     }
 
-
     MPI_Bcast(pivots,Nthr-1,MPI_LONG,MASTER,MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
 
-    if (taskid == MASTER) {
-        t_end = MPI_Wtime();
-        fprintf(outf,"Phase2: %f\n", t_end-t_start);
-    }
-
-
     //printArr(pivots,Nthr-1);
 
-    /* Phase 3 */
-    if (taskid == MASTER) {
-        t_start = MPI_Wtime();
-    } 
     int classStart[Nthr];
     int classLength[Nthr];
     
     // need for each processor to partition its list using the values
     // of pivotbuffer
-
     int dataindex=0;
     for(int classindex=0; classindex<Nthr-1; classindex++)
     {
         classStart[classindex] = dataindex;
         classLength[classindex]=0;
+
         // as long as dataindex refers to data in the current class
         while((dataindex< partLen[taskid]) 
             && (testData[dataindex]<=pivots[classindex]))
         {
             classLength[classindex]++;
             dataindex++;
-        }    
+        }       
     }
     // set Start and Length for last class
     classStart[Nthr-1] = dataindex;
     classLength[Nthr-1] = partLen[taskid] - dataindex;
-    if (taskid == MASTER) {
-        t_end = MPI_Wtime();
-        fprintf(outf,"Phase3: %f\n", t_end-t_start);
-    }
     /*printf("Start Mother Fucker\n");
     printArrInt(classStart,Nthr);
     printf("Length Mother Fucker\n");
     printArrInt(classLength,Nthr);*/
 
     
-    // PHASE 4:  All ith classes are gathered by processor i 
-    if (taskid == MASTER) {
-        t_start = MPI_Wtime();
-    } 
-
+    // PHASE V:  All ith classes are gathered by processor i 
     long int * recvbuffer = calloc(N,sizeof(long int));    
     int recvLengths[Nthr];     
     int recvStarts[Nthr];      
@@ -351,10 +306,7 @@ int main(int argc, char** argv) {
         printArr(mmStarts[i],recvLengths[i]);
     }*/
     int mysendLength = recvStarts[Nthr-1] + recvLengths[Nthr-1];
-    if (taskid == MASTER) {
-        t_end = MPI_Wtime();
-        fprintf(outf,"Phase4: %f\n", t_end-t_start);
-    }
+    
 
     // PHASE VI:  Root processor collects all the data
 
@@ -376,6 +328,9 @@ int main(int argc, char** argv) {
         }   
     }
 
+    if (taskid == MASTER) {
+        t_end = MPI_Wtime();
+    }
     
     long int * sortedData = calloc(N,sizeof(long int));
     MPI_Gatherv(testData,mysendLength,MPI_LONG,
@@ -383,7 +338,9 @@ int main(int argc, char** argv) {
     
     MPI_Barrier(MPI_COMM_WORLD);
 
-    
+    if (taskid == MASTER) {
+        printf("%d, %f\n", N, t_end-t_start);
+    }
     // Finalize the MPI environment.
     /*if (taskid == 0) {
         //printArr(sortedData,N);
@@ -391,13 +348,15 @@ int main(int argc, char** argv) {
             printf("Is sorted Thanks my folks!\n");
         }
     }*/
+
+    MPI_Finalize();
+
     free(testData);
     free(recvbuffer);
     free(sortedData);
     free(pivots);
     free(partIndex);
     free(partLen);
-    fclose(outf);
-    MPI_Finalize();
+    //fclose(outf);
     return 0;
 }

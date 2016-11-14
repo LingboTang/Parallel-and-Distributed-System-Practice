@@ -18,6 +18,8 @@
 # SSH Key
 deploy.pem
 Asn2/deploy.pem
+Asn2/*.key
+Asn2/*.key.pub
 
 # Linux Gedit Caches
 *.swp

@@ -34,12 +34,17 @@ int main(int argc, char**argv) {
 
 	struct timeval start;
     struct timeval end;
-	if (argc != 2)
+
+    char * fileName;
+    FILE * outFile;
+	if (argc != 3)
 	{
 		fprintf(stderr, "error: Not enough info!\n");
 		exit(EXIT_FAILURE);
 	}
 	int numbers = atoi(argv[1]);
+    fileName = argv[2];
+    outFile = fopen(fileName,"a+"); 
 	int i;
 
 	long int * array = (long int *) malloc(sizeof(long int)*numbers);
@@ -57,9 +62,12 @@ int main(int argc, char**argv) {
     double time_spent = (double)(end.tv_sec - start.tv_sec) * 1.0e6 + (double) (end.tv_usec - start.tv_usec);
 	time_spent = time_spent / 1000000;
 	//printArr(array,numbers);
-	printf("time spent: %f\n",time_spent);
+    //char emp = ' ';
+    //fprintf(outFile, "%c, 1\n", emp);
+	fprintf(outFile, "%d, %f\n",numbers,time_spent);
 
-	free((void *) array);	
+	free((void *) array);
+    fclose(outFile);	
 	return 0;
 
 }

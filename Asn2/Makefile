@@ -1,17 +1,40 @@
 run:build
-	mpirun -np 2 mypsrs 32000000 output.txt
+	./qsort 64000000 single.csv
+	./qsort 64000000 single.csv
+	./qsort 64000000 single.csv
+	./qsort 64000000 single.csv
+	./qsort 64000000 single.csv
+	./qsort 64000000 single.csv
+	./qsort 64000000 single.csv
+	./qsort 32000000 single.csv
+	./qsort 32000000 single.csv
+	./qsort 32000000 single.csv
+	./qsort 32000000 single.csv
+	./qsort 32000000 single.csv
+	./qsort 32000000 single.csv
+	./qsort 32000000 single.csv
+	./qsort 16000000 single.csv
+	./qsort 16000000 single.csv
+	./qsort 16000000 single.csv
+	./qsort 16000000 single.csv
+	./qsort 16000000 single.csv
+	./qsort 16000000 single.csv
+	./qsort 16000000 single.csv
+	./qsort 8000000 single.csv
+	./qsort 8000000 single.csv
+	./qsort 8000000 single.csv
+	./qsort 8000000 single.csv
+	./qsort 8000000 single.csv
+	./qsort 8000000 single.csv
+	./qsort 8000000 single.csv
 build: clean
 	mpicc -std=gnu99 -O2 -w -o mypsrs my_psrs.c -pthread -g
+	mpicc -std=gnu99 -O2 -w -o total total.c -pthread -g
 
 qsort: clean
-	gcc -std=c99 -O2 -o qsort singleThread.c
-
-kway.o: kway.c kway.h
-		mpicc -c kway.c -o kway.o
-debug.o: debug.c debug.h
-		mpicc -c debug.c -o debug.o
+	gcc -std=c99 -O2 -o qsort singleThreadSort.c
 
 submit:
 	git add -A .
 clean:
-	rm -rf core a.out mypsrs output.txt *~
+	rm -rf core a.out total mypsrs qsort *~ *.dSYM/
