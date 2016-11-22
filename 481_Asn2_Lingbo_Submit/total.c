@@ -5,8 +5,6 @@
 #include <math.h>
 #include <time.h>
 #include "mpi.h"
-//#include "kway.h"
-//#include "debug.h"
 #define MASTER 0
 #define MYSEED 23478237
 
