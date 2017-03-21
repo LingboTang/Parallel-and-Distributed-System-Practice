@@ -8,16 +8,19 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <time.h>
-#define NUM_THREADS 4
+#define NUM_THREADS 3
 
 typedef struct ThreadControlBlock {
+	long int *Chunk;
 	long int *passLength;
 	long int *sampleIndex;
 	long int *pivotArray;
-	long int *sample;
+	long int *samples;
 	int pid;
 	int N;
 	int num_threads;
+	int ChunkSize;
+	int offSet;
 } TCB;
 
 pthread_t ThreadID[NUM_THREADS];
@@ -35,46 +38,64 @@ int main (int argc, char ** argv) {
 	/* Initialize global data here */
 	/* Start threads*/
 
-    int i;
+    	int i;
 
-	if (argc != 3)
+	if (argc != 2)
 	{
 		fprintf(stderr, "error: Not enough info!\n");
 		exit(EXIT_FAILURE);
 	}
 
-    pthread_barrier_init(&mybarrier, NULL, NUM_THREADS+1);
+    	pthread_barrier_init(&mybarrier, NULL, NUM_THREADS);
 
 	int N = atoi(argv[1]);
-	//int NUM_THREADS = atoi(argv[2]);
 	int allChunkSize = N/NUM_THREADS;
 	int allSampleSize = NUM_THREADS;
 
-    long int * originArray = (long int *) malloc(sizeof(long int *)*N);
+    	long int * originArray = (long int *) malloc(sizeof(long int)*N);
 
-    for (i = 0; i<N; i++)
-    {
-        originArray[i] = random();
-    }
+    	for (i = 0; i<N; i++)
+    	{
+        	originArray[i] = random()%36;
+    	}
 
-    printArr(originArray, N);
-	//TCB myTCB 
-
+	TCB *myTCB = (TCB *) malloc(sizeof(TCB) *NUM_THREADS); 
+	for (i = 0; i<NUM_THREADS; i++)
+	{
+		myTCB[i].Chunk = (long int*) malloc(sizeof(long int)*allChunkSize);
+		myTCB[i].samples = (long int*) malloc(sizeof(long int)*NUM_THREADS);
+		memcpy(myTCB[i].Chunk, &originArray[i*allChunkSize],allChunkSize*sizeof(long int));
+		myTCB[i].N = N;
+		myTCB[i].num_threads = NUM_THREADS;
+		myTCB[i].ChunkSize = allChunkSize;
+		myTCB[i].offSet = N/(NUM_THREADS * NUM_THREADS);
+	}
 
 	for (i = 1; i < NUM_THREADS; i++)
 	{
-		//TCB[i].id = i; /* In  parameter */
-		//pthread_create(&(ThreadID[i]),NULL, mySPMDMain, (void*) &(TCB[i]));
+		myTCB[i].pid = i; 
+		pthread_create(&(ThreadID[i]),NULL, mySPMDMain, (void*) &(myTCB[i]));
 	}
-	//TCB[0].id = 0;
-	//mySPMDMain((void *) &(TCB[0]));
+	myTCB[0].pid = 0;
+	mySPMDMain((void *) &(myTCB[0]));
+	
+	for (i = 1; i<NUM_THREADS; i++)
+	{
+		pthread_join(ThreadID[i], NULL);
+	}
 
+	for (i = 0; i<NUM_THREADS; i++)
+	{
+		//printArr(myTCB[i].Chunk, allChunkSize);
+		printArr(myTCB[i].samples, NUM_THREADS);
+	}
 	/* Clean up and exit*/
+	pthread_barrier_destroy(&mybarrier);
+	free(originArray);
 	return 0;
 }
 
 #define MASTER if(localId == 0)
-#define BARRIER pthread_barrier_wait(&mybarrier)
 
 void * mySPMDMain(void *arg)
 {
@@ -89,26 +110,35 @@ void * mySPMDMain(void *arg)
 	localId = localTCB -> pid;
 
 	/* Parallel array to TCB */
-	localThreadIdPtr = &(ThreadID[localId]);
-	BARRIER;
+	qsort(localTCB -> Chunk, localTCB -> ChunkSize, sizeof(long int), cmpfunc);
+	pthread_barrier_wait(&mybarrier);
+
 	// Timing
 
 	/* Phase 1 */
-	BARRIER;
+	for (int i = 0; i< localTCB -> num_threads; i++)
+	{
+		long int sample = localTCB->Chunk[i*localTCB -> offSet];
+		localTCB->samples[i]=sample;
+	}
+	pthread_barrier_wait(&mybarrier);
+
 
 	/* Phase 2 */
-	if(localId == 0) {
+	MASTER {
 		
 	}
-	BARRIER;
+	pthread_barrier_wait(&mybarrier);
 
 
 	/* Phase 3 */
-	BARRIER;
+	pthread_barrier_wait(&mybarrier);
+
 
 	/* Phase 4 */
-	BARRIER;
+	pthread_barrier_wait(&mybarrier);
 
+	//pthread_barrier_destroy(&mybarrier);
 	//Timing 
 
 } /* mySPMDMain*/
