@@ -20,6 +20,8 @@ typedef struct ThreadControlBlock {
 	long int *pivotArray;
 	long int *selectedPivot;
 	long int *samples;
+	int *mergeLength;
+	long int * resultArr;
 	int pid;
 	int N;
 	int num_threads;
@@ -36,6 +38,7 @@ pthread_barrier_t mybarrier;
 
 
 int cmpfunc(const void*a, const void*b);
+int sumTotal(int *arr);
 void printArr(long int* arr, int size);
 void printArrInt(int* arr, int size);
 void multimerge(long int ** arrays, int * arraysizes, int number_of_arrays, long int * output);
@@ -70,6 +73,7 @@ int main (int argc, char ** argv) {
     printf("++++++++++Origin+++++++++++\n");
     printArr(originArray, N);
 
+    /*Initialize the Data Space*/
 	TCB *myTCB = (TCB *) malloc(sizeof(TCB) *NUM_THREADS); 
 	for (i = 0; i<NUM_THREADS; i++)
 	{
@@ -81,6 +85,8 @@ int main (int argc, char ** argv) {
 		myTCB[i].selectedPivot = (long int*) malloc(sizeof(long int)*NUM_THREADS-1);
 		myTCB[i].sampleIndex = (int*) malloc(sizeof(long int)*NUM_THREADS-1);
 		myTCB[i].eachStartIndex = (int*) malloc(sizeof(long int)*NUM_THREADS);
+		myTCB[i].mergeLength = (int *) malloc(sizeof(long int)*NUM_THREADS);
+		//myTCB[i].resultArr = (long int*) malloc(sizeof(long int)*allChunkSize);
 		memcpy(myTCB[i].Chunk, &originArray[i*allChunkSize],allChunkSize*sizeof(long int));
 		myTCB[i].N = N;
 		myTCB[i].num_threads = NUM_THREADS;
@@ -129,6 +135,22 @@ int main (int argc, char ** argv) {
 	    }
 	}
 
+	printf("\n========Each Thread Result========\n");
+	for (i = 0; i<NUM_THREADS; i++)
+	{
+	    printArr(myTCB[i].resultArr, sumTotal(myTCB[i].mergeLength));
+	}
+
+    memset(originArray, 0, N*sizeof(long int));
+    printArr(originArray, N);
+    for (i = 0; i<NUM_THREADS; i++)
+    {
+        int cursor = 0;
+        memcpy(&originArray[cursor], myTCB[i].resultArr, sumTotal(myTCB[i].mergeLength) * sizeof(long int));
+        cursor = cursor+sumTotal(myTCB[i].mergeLength);
+    }
+
+    printArr(originArray, N);
 	/* Clean up and exit*/
 	pthread_barrier_destroy(&mybarrier);
 	free(originArray);
@@ -207,22 +229,33 @@ void * mySPMDMain(void *arg)
 		for (int i = 0; i<NUM_THREADS; i++)
 		{
 			for (int j = 0; j<NUM_THREADS; j++)
-			{	
+			{
+			    // each temp merge space  = localTCB[i].tmpMergeSpace[j]
+                // each cpy start = localTCB[j].Chunk[localTCB[j].eachStartIndex[i]]
+                // each cpy length = localTCB[j].passLength[i] * sizeof(long int)
 				localTCB[i].tmpMergeSpace[j] = (long int*) malloc(sizeof(long int)*localTCB[j].passLength[i]);
-				// each temp merge space  = localTCB[i].tmpMergeSpace[j]
-				// each cpy start = localTCB[j].Chunk[localTCB[j].eachStartIndex[i]]
-				// each cpy length = localTCB[j].passLength[i] * sizeof(long int)
+				localTCB[i].mergeLength[j] = localTCB[j].passLength[i];
 				memcpy(localTCB[i].tmpMergeSpace[j], &(localTCB[j].Chunk[localTCB[j].eachStartIndex[i]]), (localTCB[j].passLength[i]) * sizeof(long int));
 			}
+			localTCB[i].resultArr = (long int *) malloc(sizeof(long int)*sumTotal(localTCB[i].mergeLength));
 		}
 	}
 	pthread_barrier_wait(&mybarrier);
-    //multimerge(localTCB->tmpMergeSpace,localTCB->mergeLength,NUM_THREADS,localTCB->resultArr);
+    multimerge(localTCB->tmpMergeSpace,localTCB->mergeLength,NUM_THREADS,localTCB->resultArr);
     pthread_barrier_wait(&mybarrier);
 	//Timing 
 
 } /* mySPMDMain*/
 
+int sumTotal(int *arr)
+{
+    int total = 0;
+    for (int i = 0; i<sizeof(arr)/sizeof(arr[0])+1; i++)
+    {
+        total = total+arr[i];
+    }
+    return total;
+}
 
 void printArr(long int* arr, int size)
 {
