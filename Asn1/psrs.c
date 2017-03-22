@@ -143,10 +143,11 @@ int main (int argc, char ** argv) {
 
     memset(originArray, 0, N*sizeof(long int));
     printArr(originArray, N);
+    int cursor = 0;
     for (i = 0; i<NUM_THREADS; i++)
     {
-        int cursor = 0;
         memcpy(&originArray[cursor], myTCB[i].resultArr, sumTotal(myTCB[i].mergeLength) * sizeof(long int));
+        printf("cursor: %d\n", cursor);
         cursor = cursor+sumTotal(myTCB[i].mergeLength);
     }
 
