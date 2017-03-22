@@ -13,9 +13,10 @@
 
 typedef struct ThreadControlBlock {
 	long int *Chunk;
-	long int *passLength;
-	long int *sampleIndex;
+	int *passLength;
+	int *sampleIndex;
 	long int *pivotArray;
+	long int *selectedPivot;
 	long int *samples;
 	int pid;
 	int N;
@@ -34,12 +35,10 @@ pthread_barrier_t mybarrier;
 
 int cmpfunc(const void*a, const void*b);
 void printArr(long int* arr, int size);
-void multimerge(
-    long int ** arrays,
-    int * arraysizes,
-    int number_of_arrays,
-    long int * output
-);
+void printArrInt(int* arr, int size);
+void multimerge(long int ** arrays, int * arraysizes, int number_of_arrays, long int * output);
+int binarySearch(long int *arr, int l, int r, long int x);
+
 
 int main (int argc, char ** argv) {
 	/* Initialize global data here */
@@ -70,8 +69,11 @@ int main (int argc, char ** argv) {
 	for (i = 0; i<NUM_THREADS; i++)
 	{
 		myTCB[i].Chunk = (long int*) malloc(sizeof(long int)*allChunkSize);
+		myTCB[i].passLength = (int*) malloc(sizeof(long int)*NUM_THREADS);
 		myTCB[i].samples = (long int*) malloc(sizeof(long int)*NUM_THREADS);
 		myTCB[i].pivotArray = (long int *) malloc(sizeof(long int)*NUM_THREADS*NUM_THREADS);
+		myTCB[i].selectedPivot = (long int*) malloc(sizeof(long int)*NUM_THREADS-1);
+		myTCB[i].sampleIndex = (int*) malloc(sizeof(long int)*NUM_THREADS-1);
 		memcpy(myTCB[i].Chunk, &originArray[i*allChunkSize],allChunkSize*sizeof(long int));
 		myTCB[i].N = N;
 		myTCB[i].num_threads = NUM_THREADS;
@@ -92,16 +94,11 @@ int main (int argc, char ** argv) {
 		pthread_join(ThreadID[i], NULL);
 	}
 
-	for (i = 0; i<NUM_THREADS; i++)
-	{
-		printArr(myTCB[i].Chunk, allChunkSize);
-		//printArr(myTCB[i].samples, NUM_THREADS);
-	}
-	
 	
 	for (i = 0; i<NUM_THREADS; i++)
 	{
-		printArr(myTCB[i].pivotArray, NUM_THREADS*NUM_THREADS);
+		//printArrInt(myTCB[i].sampleIndex, NUM_THREADS-1);
+		printArrInt(myTCB[i].passLength, NUM_THREADS);
 	}
 	/* Clean up and exit*/
 	pthread_barrier_destroy(&mybarrier);
@@ -145,11 +142,30 @@ void * mySPMDMain(void *arg)
 			printArr(localTCB[i].samples, NUM_THREADS);
 			memcpy(&(localTCB->pivotArray[i*NUM_THREADS]),localTCB[i].samples, NUM_THREADS*sizeof(long int));
 		}
+		qsort(localTCB -> pivotArray, NUM_THREADS*NUM_THREADS, sizeof(long int), cmpfunc);
+		for (int i = 0; i<NUM_THREADS-1; i++)
+		{	
+			localTCB-> selectedPivot[i] = localTCB-> pivotArray[(i+1)*NUM_THREADS];
+		}
+		for (int i = 1; i<NUM_THREADS; i++)
+		{
+			memcpy(localTCB[i].selectedPivot,localTCB[0].selectedPivot,(NUM_THREADS-1)*sizeof(long int));
+		}
 	}
 	pthread_barrier_wait(&mybarrier);
 
 
 	/* Phase 3 */
+	for (int i = 0; i<NUM_THREADS-1; i++)
+	{
+		localTCB -> sampleIndex[i] = binarySearch(localTCB->Chunk,0,localTCB->ChunkSize -1, localTCB->selectedPivot[i]);
+	}
+	for (int i = 0; i<NUM_THREADS; i++)
+	{
+		if (i == 0) localTCB -> passLength[i] = localTCB -> sampleIndex[i];
+		localTCB -> passLength[i] = localTCB -> sampleIndex[i] - localTCB -> sampleIndex[i-1];
+		if (i == NUM_THREADS-1) localTCB -> passLength[i] = localTCB -> ChunkSize - localTCB -> sampleIndex[i-1];
+	}
 	pthread_barrier_wait(&mybarrier);
 
 
@@ -164,7 +180,6 @@ void * mySPMDMain(void *arg)
 
 void printArr(long int* arr, int size)
 {
-
 	for (int i = 0; i< size; i++)
         {
             if (i == 0)
@@ -179,18 +194,29 @@ void printArr(long int* arr, int size)
 	}
 }
 
+void printArrInt(int* arr, int size)
+{
+    for (int i = 0; i< size; i++)
+    {
+        if (i == 0)
+        {
+            printf("[ ");
+        }
+        printf("%d ",arr[i]);
+        if (i == size -1)
+        {
+            printf("]\n");
+        }
+    }
+}
+
 
 int cmpfunc(const void*a, const void*b)
 {
 	return (*(long int*)a - *(long int*)b);
 }
 
-void multimerge(
-    long int ** arrays,      
-    int * arraysizes,    
-    int number_of_arrays,            
-    long int * output               
-){
+void multimerge(long int ** arrays, int * arraysizes, int number_of_arrays, long int * output) {
     int i = 0;       
     int j = 0;       
     int min;         
@@ -209,8 +235,7 @@ void multimerge(
         
         for(j = 0; j < number_of_arrays; ++j){
 
-            if(cursor[j] < arraysizes[j] &&  
-               arrays[j][cursor[j]] < min){  
+            if(cursor[j] < arraysizes[j] && arrays[j][cursor[j]] < min){  
                 min = arrays[j][cursor[j]];  
                 minposition = j;             
             }
@@ -225,3 +250,18 @@ void multimerge(
     }
     free(cursor);
 }
+
+int binarySearch(long int *arr, int l, int r, long int x)
+{
+	if (r>= l)
+	{
+		int mid = l + (r-l)/2;
+		if (arr[mid] == x) return mid + 1;
+		if (arr[mid] > x) return binarySearch(arr,l, mid-1, x);
+		return binarySearch(arr, mid+1, r, x);
+	}
+	else {
+      return l;
+    }
+}
+
