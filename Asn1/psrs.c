@@ -7,6 +7,7 @@
 #include <malloc.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <limits.h>
 #include <time.h>
 #define NUM_THREADS 3
 
@@ -33,6 +34,12 @@ pthread_barrier_t mybarrier;
 
 int cmpfunc(const void*a, const void*b);
 void printArr(long int* arr, int size);
+void multimerge(
+    long int ** arrays,
+    int * arraysizes,
+    int number_of_arrays,
+    long int * output
+);
 
 int main (int argc, char ** argv) {
 	/* Initialize global data here */
@@ -64,6 +71,7 @@ int main (int argc, char ** argv) {
 	{
 		myTCB[i].Chunk = (long int*) malloc(sizeof(long int)*allChunkSize);
 		myTCB[i].samples = (long int*) malloc(sizeof(long int)*NUM_THREADS);
+		myTCB[i].pivotArray = (long int *) malloc(sizeof(long int)*NUM_THREADS*NUM_THREADS);
 		memcpy(myTCB[i].Chunk, &originArray[i*allChunkSize],allChunkSize*sizeof(long int));
 		myTCB[i].N = N;
 		myTCB[i].num_threads = NUM_THREADS;
@@ -86,8 +94,14 @@ int main (int argc, char ** argv) {
 
 	for (i = 0; i<NUM_THREADS; i++)
 	{
-		//printArr(myTCB[i].Chunk, allChunkSize);
-		printArr(myTCB[i].samples, NUM_THREADS);
+		printArr(myTCB[i].Chunk, allChunkSize);
+		//printArr(myTCB[i].samples, NUM_THREADS);
+	}
+	
+	
+	for (i = 0; i<NUM_THREADS; i++)
+	{
+		printArr(myTCB[i].pivotArray, NUM_THREADS*NUM_THREADS);
 	}
 	/* Clean up and exit*/
 	pthread_barrier_destroy(&mybarrier);
@@ -126,7 +140,11 @@ void * mySPMDMain(void *arg)
 
 	/* Phase 2 */
 	MASTER {
-		
+		for (int i = 0; i<NUM_THREADS; i++)
+		{
+			printArr(localTCB[i].samples, NUM_THREADS);
+			memcpy(&(localTCB->pivotArray[i*NUM_THREADS]),localTCB[i].samples, NUM_THREADS*sizeof(long int));
+		}
 	}
 	pthread_barrier_wait(&mybarrier);
 
@@ -165,4 +183,45 @@ void printArr(long int* arr, int size)
 int cmpfunc(const void*a, const void*b)
 {
 	return (*(long int*)a - *(long int*)b);
+}
+
+void multimerge(
+    long int ** arrays,      
+    int * arraysizes,    
+    int number_of_arrays,            
+    long int * output               
+){
+    int i = 0;       
+    int j = 0;       
+    int min;         
+    int minposition; 
+
+  
+    long int * cursor = calloc(number_of_arrays,sizeof(long int));
+
+    if(cursor == NULL)
+        return;
+
+    while(1){
+        min = INT_MAX;
+        minposition = -1; 
+
+        
+        for(j = 0; j < number_of_arrays; ++j){
+
+            if(cursor[j] < arraysizes[j] &&  
+               arrays[j][cursor[j]] < min){  
+                min = arrays[j][cursor[j]];  
+                minposition = j;             
+            }
+        }
+
+
+        if(minposition == -1)
+            break;
+     
+        output[i++] = min;
+        cursor[minposition]++;
+    }
+    free(cursor);
 }
