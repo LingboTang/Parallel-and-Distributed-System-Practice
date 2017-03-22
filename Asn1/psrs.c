@@ -15,6 +15,8 @@ typedef struct ThreadControlBlock {
 	long int *Chunk;
 	int *passLength;
 	int *sampleIndex;
+	int *eachStartIndex;
+	long int **tmpMergeSpace;
 	long int *pivotArray;
 	long int *selectedPivot;
 	long int *samples;
@@ -44,7 +46,7 @@ int main (int argc, char ** argv) {
 	/* Initialize global data here */
 	/* Start threads*/
 
-    	int i;
+    int i;
 
 	if (argc != 2)
 	{
@@ -52,18 +54,21 @@ int main (int argc, char ** argv) {
 		exit(EXIT_FAILURE);
 	}
 
-    	pthread_barrier_init(&mybarrier, NULL, NUM_THREADS);
+    pthread_barrier_init(&mybarrier, NULL, NUM_THREADS);
 
 	int N = atoi(argv[1]);
 	int allChunkSize = N/NUM_THREADS;
 	int allSampleSize = NUM_THREADS;
 
-    	long int * originArray = (long int *) malloc(sizeof(long int)*N);
+    long int * originArray = (long int *) malloc(sizeof(long int)*N);
 
-    	for (i = 0; i<N; i++)
-    	{
-        	originArray[i] = random()%36;
-    	}
+    for (i = 0; i<N; i++)
+    {
+        originArray[i] = random()%36;
+    }
+
+    printf("++++++++++Origin+++++++++++\n");
+    printArr(originArray, N);
 
 	TCB *myTCB = (TCB *) malloc(sizeof(TCB) *NUM_THREADS); 
 	for (i = 0; i<NUM_THREADS; i++)
@@ -71,9 +76,11 @@ int main (int argc, char ** argv) {
 		myTCB[i].Chunk = (long int*) malloc(sizeof(long int)*allChunkSize);
 		myTCB[i].passLength = (int*) malloc(sizeof(long int)*NUM_THREADS);
 		myTCB[i].samples = (long int*) malloc(sizeof(long int)*NUM_THREADS);
+		myTCB[i].tmpMergeSpace = (long int**) malloc(sizeof(long int *)*NUM_THREADS);
 		myTCB[i].pivotArray = (long int *) malloc(sizeof(long int)*NUM_THREADS*NUM_THREADS);
 		myTCB[i].selectedPivot = (long int*) malloc(sizeof(long int)*NUM_THREADS-1);
 		myTCB[i].sampleIndex = (int*) malloc(sizeof(long int)*NUM_THREADS-1);
+		myTCB[i].eachStartIndex = (int*) malloc(sizeof(long int)*NUM_THREADS);
 		memcpy(myTCB[i].Chunk, &originArray[i*allChunkSize],allChunkSize*sizeof(long int));
 		myTCB[i].N = N;
 		myTCB[i].num_threads = NUM_THREADS;
@@ -94,12 +101,34 @@ int main (int argc, char ** argv) {
 		pthread_join(ThreadID[i], NULL);
 	}
 
-	
+	/*
+	 * Debugging Each Step
+	 */
 	for (i = 0; i<NUM_THREADS; i++)
 	{
-		//printArrInt(myTCB[i].sampleIndex, NUM_THREADS-1);
+	    printf("=======Chunks======\n");
+		printArr(myTCB[i].Chunk, allChunkSize);
+		printf("=======Pivots===========\n");
+		printArr(myTCB[i].pivotArray, NUM_THREADS*NUM_THREADS);
+		printf("========Selected=================\n");
+		printArr(myTCB[i].selectedPivot, NUM_THREADS-1);
+		printf("========SampleIndex===================\n");
+		printArrInt(myTCB[i].sampleIndex, NUM_THREADS-1);
+		printf("=========Each Start Index=============\n");
+		printArrInt(myTCB[i].eachStartIndex, NUM_THREADS);
+		printf("=========passLength====================\n");
 		printArrInt(myTCB[i].passLength, NUM_THREADS);
 	}
+
+    printf("========Merge Space========\n");
+	for (i = 0; i < NUM_THREADS; i++)
+	{
+	    for (int j = 0; j< NUM_THREADS; j++)
+	    {
+	        printArr(myTCB[i].tmpMergeSpace[j], myTCB[j].passLength[i]);
+	    }
+	}
+
 	/* Clean up and exit*/
 	pthread_barrier_destroy(&mybarrier);
 	free(originArray);
@@ -139,7 +168,6 @@ void * mySPMDMain(void *arg)
 	MASTER {
 		for (int i = 0; i<NUM_THREADS; i++)
 		{
-			printArr(localTCB[i].samples, NUM_THREADS);
 			memcpy(&(localTCB->pivotArray[i*NUM_THREADS]),localTCB[i].samples, NUM_THREADS*sizeof(long int));
 		}
 		qsort(localTCB -> pivotArray, NUM_THREADS*NUM_THREADS, sizeof(long int), cmpfunc);
@@ -162,6 +190,11 @@ void * mySPMDMain(void *arg)
 	}
 	for (int i = 0; i<NUM_THREADS; i++)
 	{
+		if(i == 0) localTCB -> eachStartIndex[i] = 0;
+		else localTCB -> eachStartIndex[i] = localTCB -> sampleIndex[i-1];
+	}
+	for (int i = 0; i<NUM_THREADS; i++)
+	{
 		if (i == 0) localTCB -> passLength[i] = localTCB -> sampleIndex[i];
 		localTCB -> passLength[i] = localTCB -> sampleIndex[i] - localTCB -> sampleIndex[i-1];
 		if (i == NUM_THREADS-1) localTCB -> passLength[i] = localTCB -> ChunkSize - localTCB -> sampleIndex[i-1];
@@ -170,9 +203,22 @@ void * mySPMDMain(void *arg)
 
 
 	/* Phase 4 */
+	MASTER {
+		for (int i = 0; i<NUM_THREADS; i++)
+		{
+			for (int j = 0; j<NUM_THREADS; j++)
+			{	
+				localTCB[i].tmpMergeSpace[j] = (long int*) malloc(sizeof(long int)*localTCB[j].passLength[i]);
+				// each temp merge space  = localTCB[i].tmpMergeSpace[j]
+				// each cpy start = localTCB[j].Chunk[localTCB[j].eachStartIndex[i]]
+				// each cpy length = localTCB[j].passLength[i] * sizeof(long int)
+				memcpy(localTCB[i].tmpMergeSpace[j], &(localTCB[j].Chunk[localTCB[j].eachStartIndex[i]]), (localTCB[j].passLength[i]) * sizeof(long int));
+			}
+		}
+	}
 	pthread_barrier_wait(&mybarrier);
-
-	//pthread_barrier_destroy(&mybarrier);
+    //multimerge(localTCB->tmpMergeSpace,localTCB->mergeLength,NUM_THREADS,localTCB->resultArr);
+    pthread_barrier_wait(&mybarrier);
 	//Timing 
 
 } /* mySPMDMain*/
@@ -264,4 +310,3 @@ int binarySearch(long int *arr, int l, int r, long int x)
       return l;
     }
 }
-
