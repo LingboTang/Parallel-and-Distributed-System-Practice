@@ -1,14 +1,6 @@
 #define _GNU_SOURCE
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <ctype.h>
-#include <string.h>
-#include <malloc.h>
-#include <unistd.h>
+#include "myutils.h"
 #include <pthread.h>
-#include <limits.h>
-#include <time.h>
 #define NUM_THREADS 3
 
 typedef struct ThreadControlBlock {
@@ -37,14 +29,6 @@ void * mySPMDMain(void *);
 pthread_barrier_t mybarrier;
 
 
-int cmpfunc(const void*a, const void*b);
-int sumTotal(int *arr);
-void printArr(long int* arr, int size);
-void printArrInt(int* arr, int size);
-void multimerge(long int ** arrays, int * arraysizes, int number_of_arrays, long int * output);
-int binarySearch(long int *arr, int l, int r, long int x);
-
-
 int main (int argc, char ** argv) {
 	/* Initialize global data here */
 	/* Start threads*/
@@ -53,7 +37,7 @@ int main (int argc, char ** argv) {
 
 	if (argc != 2)
 	{
-		fprintf(stderr, "error: Not enough info!\n");
+		fprintf(stderr, "usage: ./psrs <Number of Keys>\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -61,7 +45,7 @@ int main (int argc, char ** argv) {
 
 	int N = atoi(argv[1]);
 	int allChunkSize = N/NUM_THREADS;
-	int allSampleSize = NUM_THREADS;
+	//int allSampleSize = NUM_THREADS;
 
     long int * originArray = (long int *) malloc(sizeof(long int)*N);
 
@@ -69,9 +53,6 @@ int main (int argc, char ** argv) {
     {
         originArray[i] = random()%36;
     }
-
-    printf("++++++++++Origin+++++++++++\n");
-    printArr(originArray, N);
 
     /*Initialize the Data Space*/
 	TCB *myTCB = (TCB *) malloc(sizeof(TCB) *NUM_THREADS); 
@@ -110,7 +91,7 @@ int main (int argc, char ** argv) {
 	/*
 	 * Debugging Each Step
 	 */
-	for (i = 0; i<NUM_THREADS; i++)
+	/*for (i = 0; i<NUM_THREADS; i++)
 	{
 	    printf("=======Chunks======\n");
 		printArr(myTCB[i].Chunk, allChunkSize);
@@ -139,21 +120,20 @@ int main (int argc, char ** argv) {
 	for (i = 0; i<NUM_THREADS; i++)
 	{
 	    printArr(myTCB[i].resultArr, sumTotal(myTCB[i].mergeLength));
-	}
+	}*/
 
     memset(originArray, 0, N*sizeof(long int));
-    printArr(originArray, N);
     int cursor = 0;
     for (i = 0; i<NUM_THREADS; i++)
     {
         memcpy(&originArray[cursor], myTCB[i].resultArr, sumTotal(myTCB[i].mergeLength) * sizeof(long int));
-        printf("cursor: %d\n", cursor);
         cursor = cursor+sumTotal(myTCB[i].mergeLength);
     }
-
-    printArr(originArray, N);
 	/* Clean up and exit*/
 	pthread_barrier_destroy(&mybarrier);
+    if (isSorted(originArray,N) == 1) {
+        printf("Is sorted Thanks my folks!\n");
+    }
 	free(originArray);
 	return 0;
 }
@@ -164,7 +144,7 @@ void * mySPMDMain(void *arg)
 {
 	TCB * localTCB;
 	int localId;
-	pthread_t * localThreadIdPtr;
+	//pthread_t * localThreadIdPtr;
 
 	/* Actual parameter */
 	localTCB = (TCB *)arg;
@@ -246,101 +226,6 @@ void * mySPMDMain(void *arg)
     pthread_barrier_wait(&mybarrier);
 	//Timing 
 
+    return NULL;
+
 } /* mySPMDMain*/
-
-int sumTotal(int *arr)
-{
-    int total = 0;
-    for (int i = 0; i<sizeof(arr)/sizeof(arr[0])+1; i++)
-    {
-        total = total+arr[i];
-    }
-    return total;
-}
-
-void printArr(long int* arr, int size)
-{
-	for (int i = 0; i< size; i++)
-        {
-            if (i == 0)
-            {
-                printf("[ ");
-            }
-            printf("%ld ",arr[i]);
-            if (i == size -1)
-            {
-                printf("]\n");
-	    }
-	}
-}
-
-void printArrInt(int* arr, int size)
-{
-    for (int i = 0; i< size; i++)
-    {
-        if (i == 0)
-        {
-            printf("[ ");
-        }
-        printf("%d ",arr[i]);
-        if (i == size -1)
-        {
-            printf("]\n");
-        }
-    }
-}
-
-
-int cmpfunc(const void*a, const void*b)
-{
-	return (*(long int*)a - *(long int*)b);
-}
-
-void multimerge(long int ** arrays, int * arraysizes, int number_of_arrays, long int * output) {
-    int i = 0;       
-    int j = 0;       
-    int min;         
-    int minposition; 
-
-  
-    long int * cursor = calloc(number_of_arrays,sizeof(long int));
-
-    if(cursor == NULL)
-        return;
-
-    while(1){
-        min = INT_MAX;
-        minposition = -1; 
-
-        
-        for(j = 0; j < number_of_arrays; ++j){
-
-            if(cursor[j] < arraysizes[j] && arrays[j][cursor[j]] < min){  
-                min = arrays[j][cursor[j]];  
-                minposition = j;             
-            }
-        }
-
-
-        if(minposition == -1)
-            break;
-     
-        output[i++] = min;
-        cursor[minposition]++;
-    }
-    free(cursor);
-}
-
-int binarySearch(long int *arr, int l, int r, long int x)
-{
-	if (r>= l)
-	{
-		int mid = l + (r-l)/2;
-		if (arr[mid] == x) return mid + 1;
-		if (arr[mid] > x) return binarySearch(arr,l, mid-1, x);
-		return binarySearch(arr, mid+1, r, x);
-	}
-	else {
-      return l;
-    }
-}
