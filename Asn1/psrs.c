@@ -42,8 +42,8 @@ int main (int argc, char ** argv) {
 		myTCB[i].samples = (long int*) malloc(sizeof(long int)*NUM_THREADS);
 		myTCB[i].tmpMergeSpace = (long int**) malloc(sizeof(long int *)*NUM_THREADS);
 		myTCB[i].pivotArray = (long int *) malloc(sizeof(long int)*NUM_THREADS*NUM_THREADS);
-		myTCB[i].selectedPivot = (long int*) malloc(sizeof(long int)*NUM_THREADS-1);
-		myTCB[i].sampleIndex = (int*) malloc(sizeof(int)*NUM_THREADS-1);
+		myTCB[i].selectedPivot = (long int*) malloc(sizeof(long int)*(NUM_THREADS-1));
+		myTCB[i].sampleIndex = (int*) malloc(sizeof(int)*(NUM_THREADS-1));
 		myTCB[i].eachStartIndex = (int*) malloc(sizeof(int)*NUM_THREADS);
 		myTCB[i].mergeLength = (int *) malloc(sizeof(int)*NUM_THREADS);
 		memcpy(myTCB[i].Chunk, &originArray[i*allChunkSize],allChunkSize*sizeof(long int));

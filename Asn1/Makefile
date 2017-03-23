@@ -20,7 +20,15 @@ EXEC := psrs
 # Run Time
 run:	clean
 	make build
-	./$(EXEC) 2000000
+	./$(EXEC) 2000000 8
+	./$(EXEC) 4000000 8
+	./$(EXEC) 8000000 8
+	./$(EXEC) 16000000 8
+	./$(EXEC) 32000000 8
+	./$(EXEC) 64000000 8
+	./$(EXEC) 128000000 8
+	./$(EXEC) 256000000 8
+	./$(EXEC) 512000000 8
 
 # Build all files
 build:	$(PSRSO) $(UTILO)
@@ -33,6 +41,10 @@ $(PSRSO):	$(PSRSC)
 # Build Util functions
 $(UTILO):	$(UTILC) $(UTILH)
 	$(CC) $(CCOPTS) -c $(UTILC)
+
+#debugging:
+memcheck:
+	valgrind --leak-check=full ./$(EXEC) 80000000 8	
 
 # Clean Up
 clean:
