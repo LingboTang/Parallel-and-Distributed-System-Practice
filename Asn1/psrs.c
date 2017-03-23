@@ -17,7 +17,8 @@ int main (int argc, char ** argv) {
 		exit(EXIT_FAILURE);
 	}
 
-
+    struct timeval start;
+    struct timeval end;
 
 	int N = atoi(argv[1]);
 	int NUM_THREADS = atoi(argv[2]);
@@ -52,6 +53,8 @@ int main (int argc, char ** argv) {
 		myTCB[i].offSet = N/(NUM_THREADS * NUM_THREADS);
 	}
 
+    gettimeofday(&start, NULL);
+
 	for (i = 1; i < NUM_THREADS; i++)
 	{
 		myTCB[i].pid = i; 
@@ -65,6 +68,11 @@ int main (int argc, char ** argv) {
 		pthread_join(ThreadID[i], NULL);
 	}
 
+    gettimeofday(&end, NULL);
+    double time_spent = (double)(end.tv_sec - start.tv_sec) * 1.0e6 + (double) (end.tv_usec - start.tv_usec);
+    time_spent = time_spent /1000000;
+    printf("time spent: %f\n", time_spent);
+
     memset(originArray, 0, N*sizeof(long int));
     int cursor = 0;
     for (i = 0; i<NUM_THREADS; i++)
@@ -75,7 +83,6 @@ int main (int argc, char ** argv) {
 	/* Clean up and exit*/
 	pthread_barrier_destroy(&mybarrier);
 	assert(isSorted(originArray,N) == 1);
-	printArr(originArray, N);
     for (i = 0; i<NUM_THREADS; i++)
     {
         free(myTCB[i].mergeLength);
@@ -184,7 +191,6 @@ void * mySPMDMain(void *arg)
     multimerge(localTCB->tmpMergeSpace,localTCB->mergeLength,localTCB -> num_threads,localTCB->resultArr);
     pthread_barrier_wait(&mybarrier);
 	//Timing
-
 
 
     return NULL;
