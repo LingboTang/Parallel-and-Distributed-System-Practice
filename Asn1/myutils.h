@@ -10,7 +10,7 @@
 
 
 int cmpfunc(const void*a, const void*b);
-int sumTotal(int *arr);
+int sumTotal(int *arr, int size);
 void printArr(long int* arr, int size);
 void printArrInt(int* arr, int size);
 void multimerge(long int ** arrays, int * arraysizes, int number_of_arrays, long int * output);

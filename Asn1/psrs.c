@@ -1,7 +1,7 @@
 #define _GNU_SOURCE
 #include "myutils.h"
 #include <pthread.h>
-#define NUM_THREADS 3
+#define NUM_THREADS 4
 
 typedef struct ThreadControlBlock {
 	long int *Chunk;
@@ -51,22 +51,24 @@ int main (int argc, char ** argv) {
 
     for (i = 0; i<N; i++)
     {
-        originArray[i] = random()%36;
+        originArray[i] = random()%100;
     }
+
+    printArr(originArray,N);
 
     /*Initialize the Data Space*/
 	TCB *myTCB = (TCB *) malloc(sizeof(TCB) *NUM_THREADS); 
 	for (i = 0; i<NUM_THREADS; i++)
 	{
 		myTCB[i].Chunk = (long int*) malloc(sizeof(long int)*allChunkSize);
-		myTCB[i].passLength = (int*) malloc(sizeof(long int)*NUM_THREADS);
+		myTCB[i].passLength = (int*) malloc(sizeof(int)*NUM_THREADS);
 		myTCB[i].samples = (long int*) malloc(sizeof(long int)*NUM_THREADS);
 		myTCB[i].tmpMergeSpace = (long int**) malloc(sizeof(long int *)*NUM_THREADS);
 		myTCB[i].pivotArray = (long int *) malloc(sizeof(long int)*NUM_THREADS*NUM_THREADS);
 		myTCB[i].selectedPivot = (long int*) malloc(sizeof(long int)*NUM_THREADS-1);
-		myTCB[i].sampleIndex = (int*) malloc(sizeof(long int)*NUM_THREADS-1);
-		myTCB[i].eachStartIndex = (int*) malloc(sizeof(long int)*NUM_THREADS);
-		myTCB[i].mergeLength = (int *) malloc(sizeof(long int)*NUM_THREADS);
+		myTCB[i].sampleIndex = (int*) malloc(sizeof(int)*NUM_THREADS-1);
+		myTCB[i].eachStartIndex = (int*) malloc(sizeof(int)*NUM_THREADS);
+		myTCB[i].mergeLength = (int *) malloc(sizeof(int)*NUM_THREADS);
 		//myTCB[i].resultArr = (long int*) malloc(sizeof(long int)*allChunkSize);
 		memcpy(myTCB[i].Chunk, &originArray[i*allChunkSize],allChunkSize*sizeof(long int));
 		myTCB[i].N = N;
@@ -88,24 +90,46 @@ int main (int argc, char ** argv) {
 		pthread_join(ThreadID[i], NULL);
 	}
 
+
 	/*
 	 * Debugging Each Step
 	 */
-	/*for (i = 0; i<NUM_THREADS; i++)
+	printf("=======Chunks======\n");
+	for (i = 0; i<NUM_THREADS; i++)
 	{
-	    printf("=======Chunks======\n");
 		printArr(myTCB[i].Chunk, allChunkSize);
-		printf("=======Pivots===========\n");
-		printArr(myTCB[i].pivotArray, NUM_THREADS*NUM_THREADS);
-		printf("========Selected=================\n");
-		printArr(myTCB[i].selectedPivot, NUM_THREADS-1);
-		printf("========SampleIndex===================\n");
-		printArrInt(myTCB[i].sampleIndex, NUM_THREADS-1);
-		printf("=========Each Start Index=============\n");
-		printArrInt(myTCB[i].eachStartIndex, NUM_THREADS);
-		printf("=========passLength====================\n");
-		printArrInt(myTCB[i].passLength, NUM_THREADS);
 	}
+
+    printf("=======Pivots===========\n");
+    for (i = 0; i<NUM_THREADS; i++)
+    {
+        printArr(myTCB[i].pivotArray, NUM_THREADS*NUM_THREADS);
+    }
+
+    printf("========Selected=================\n");
+    for (i = 0; i<NUM_THREADS; i++)
+    {
+        printArr(myTCB[i].selectedPivot, NUM_THREADS-1);
+    }
+
+    printf("========SampleIndex===================\n");
+    for (i = 0; i<NUM_THREADS; i++)
+    {
+        printArrInt(myTCB[i].sampleIndex, NUM_THREADS-1);
+    }
+
+    printf("=========Each Start Index=============\n");
+    for (i = 0; i<NUM_THREADS; i++)
+    {
+        printArrInt(myTCB[i].eachStartIndex, NUM_THREADS);
+    }
+
+    printf("=========passLength====================\n");
+    for (i = 0; i<NUM_THREADS; i++)
+    {
+        printArrInt(myTCB[i].passLength, NUM_THREADS);
+    }
+
 
     printf("========Merge Space========\n");
 	for (i = 0; i < NUM_THREADS; i++)
@@ -114,25 +138,39 @@ int main (int argc, char ** argv) {
 	    {
 	        printArr(myTCB[i].tmpMergeSpace[j], myTCB[j].passLength[i]);
 	    }
+	    printf("\n");
 	}
-
 	printf("\n========Each Thread Result========\n");
 	for (i = 0; i<NUM_THREADS; i++)
 	{
-	    printArr(myTCB[i].resultArr, sumTotal(myTCB[i].mergeLength));
-	}*/
+	    printArr(myTCB[i].resultArr, sumTotal(myTCB[i].mergeLength, NUM_THREADS));
+	}
+
+    printf("\n");
 
     memset(originArray, 0, N*sizeof(long int));
     int cursor = 0;
     for (i = 0; i<NUM_THREADS; i++)
     {
-        memcpy(&originArray[cursor], myTCB[i].resultArr, sumTotal(myTCB[i].mergeLength) * sizeof(long int));
-        cursor = cursor+sumTotal(myTCB[i].mergeLength);
+        memcpy(&originArray[cursor], myTCB[i].resultArr, sumTotal(myTCB[i].mergeLength, NUM_THREADS) * sizeof(long int));
+        cursor = cursor+sumTotal(myTCB[i].mergeLength, NUM_THREADS);
     }
 	/* Clean up and exit*/
 	pthread_barrier_destroy(&mybarrier);
+	printArr(originArray, N);
     if (isSorted(originArray,N) == 1) {
         printf("Is sorted Thanks my folks!\n");
+    }
+    for (i = 0; i<NUM_THREADS; i++)
+    {
+        free(myTCB[i].mergeLength);
+        free(myTCB[i].eachStartIndex);
+        free(myTCB[i].sampleIndex);
+        free(myTCB[i].selectedPivot);
+        free(myTCB[i].pivotArray);
+        free(myTCB[i].samples);
+        free(myTCB[i].passLength);
+        free(myTCB[i].Chunk);
     }
 	free(originArray);
 	return 0;
@@ -218,7 +256,7 @@ void * mySPMDMain(void *arg)
 				localTCB[i].mergeLength[j] = localTCB[j].passLength[i];
 				memcpy(localTCB[i].tmpMergeSpace[j], &(localTCB[j].Chunk[localTCB[j].eachStartIndex[i]]), (localTCB[j].passLength[i]) * sizeof(long int));
 			}
-			localTCB[i].resultArr = (long int *) malloc(sizeof(long int)*sumTotal(localTCB[i].mergeLength));
+			localTCB[i].resultArr = (long int *) malloc(sizeof(long int)*sumTotal(localTCB[i].mergeLength, NUM_THREADS));
 		}
 	}
 	pthread_barrier_wait(&mybarrier);

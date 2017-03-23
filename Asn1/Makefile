@@ -20,7 +20,7 @@ EXEC := psrs
 # Run Time
 run:	clean
 	make build
-	./$(EXEC) 36
+	./$(EXEC) 2000000
 
 # Build all files
 build:	$(PSRSO) $(UTILO)

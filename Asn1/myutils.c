@@ -1,9 +1,9 @@
 #include "myutils.h"
 
-int sumTotal(int *arr)
+int sumTotal(int *arr, int size)
 {
     int total = 0;
-    for (int i = 0; i<sizeof(arr)/sizeof(arr[0])+1; i++)
+    for (int i = 0; i<size; i++)
     {
         total = total+arr[i];
     }
@@ -52,8 +52,7 @@ void multimerge(long int ** arrays, int * arraysizes, int number_of_arrays, long
     int i = 0;       
     int j = 0;       
     int min;         
-    int minposition; 
-
+    int minposition;
   
     long int * cursor = calloc(number_of_arrays,sizeof(long int));
 
