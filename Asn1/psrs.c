@@ -30,7 +30,7 @@ int main (int argc, char ** argv) {
 
     for (i = 0; i<N; i++)
     {
-        originArray[i] = random();
+        originArray[i] = random() % 100000;
     }
 
     /*Initialize the Data Space*/
@@ -43,9 +43,9 @@ int main (int argc, char ** argv) {
 		myTCB[i].tmpMergeSpace = (long int**) malloc(sizeof(long int *)*NUM_THREADS);
 		myTCB[i].pivotArray = (long int *) malloc(sizeof(long int)*NUM_THREADS*NUM_THREADS);
 		myTCB[i].selectedPivot = (long int*) malloc(sizeof(long int)*(NUM_THREADS-1));
-		myTCB[i].sampleIndex = (int*) malloc(sizeof(int)*(NUM_THREADS-1));
 		myTCB[i].eachStartIndex = (int*) malloc(sizeof(int)*NUM_THREADS);
 		myTCB[i].mergeLength = (int *) malloc(sizeof(int)*NUM_THREADS);
+		myTCB[i].sampleIndex = calloc((NUM_THREADS-1), sizeof(int));
 		memcpy(myTCB[i].Chunk, &originArray[i*allChunkSize],allChunkSize*sizeof(long int));
 		myTCB[i].N = N;
 		myTCB[i].num_threads = NUM_THREADS;
@@ -106,6 +106,7 @@ int main (int argc, char ** argv) {
 }
 
 #define MASTER if(localId == 0)
+#define BARRIER pthread_barrier_wait(&mybarrier)
 
 void * mySPMDMain(void *arg)
 {
@@ -120,7 +121,7 @@ void * mySPMDMain(void *arg)
 
 	/* Parallel array to TCB */
 	qsort(localTCB -> Chunk, localTCB -> ChunkSize, sizeof(long int), cmpfunc);
-	pthread_barrier_wait(&mybarrier);
+	BARRIER;
 
 	// Timing
 
@@ -130,7 +131,7 @@ void * mySPMDMain(void *arg)
 		long int sample = localTCB->Chunk[i*localTCB -> offSet];
 		localTCB->samples[i]=sample;
 	}
-	pthread_barrier_wait(&mybarrier);
+	BARRIER;
 
 
 	/* Phase 2 */
@@ -149,7 +150,7 @@ void * mySPMDMain(void *arg)
 			memcpy(localTCB[i].selectedPivot,localTCB[0].selectedPivot,((localTCB -> num_threads)-1)*sizeof(long int));
 		}
 	}
-	pthread_barrier_wait(&mybarrier);
+	BARRIER;
 
 
 	/* Phase 3 */
@@ -168,7 +169,7 @@ void * mySPMDMain(void *arg)
 		localTCB -> passLength[i] = localTCB -> sampleIndex[i] - localTCB -> sampleIndex[i-1];
 		if (i == (localTCB -> num_threads)-1) localTCB -> passLength[i] = localTCB -> ChunkSize - localTCB -> sampleIndex[i-1];
 	}
-	pthread_barrier_wait(&mybarrier);
+	BARRIER;
 
 
 	/* Phase 4 */
@@ -187,9 +188,9 @@ void * mySPMDMain(void *arg)
 			localTCB[i].resultArr = (long int *) malloc(sizeof(long int)*sumTotal(localTCB[i].mergeLength, localTCB -> num_threads));
 		}
 	}
-	pthread_barrier_wait(&mybarrier);
+	BARRIER;
     multimerge(localTCB->tmpMergeSpace,localTCB->mergeLength,localTCB -> num_threads,localTCB->resultArr);
-    pthread_barrier_wait(&mybarrier);
+    BARRIER;
 	//Timing
 
 

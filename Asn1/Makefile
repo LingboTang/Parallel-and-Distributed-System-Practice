@@ -4,7 +4,7 @@ CC := gcc
 
 # Compile Options
 
-CCOPTS := -Wall -std=gnu99 -O2 -g
+CCOPTS := -Wall -std=gnu99 -O1 -g
 
 # Thread Linker
 LP := -lpthread
