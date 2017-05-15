@@ -28,14 +28,14 @@ int main (int argc, char ** argv) {
 
     long int * originArray = (long int *) malloc(sizeof(long int)*N);
 
-    for (i = 0; i<N; i++)
+    for (i = 0; i<N; ++i)
     {
         originArray[i] = random() % 100000;
     }
 
     /*Initialize the Data Space*/
 	TCB *myTCB = (TCB *) malloc(sizeof(TCB) *NUM_THREADS); 
-	for (i = 0; i<NUM_THREADS; i++)
+	for (i = 0; i<NUM_THREADS; ++i)
 	{
 		myTCB[i].Chunk = (long int*) malloc(sizeof(long int)*allChunkSize);
 		myTCB[i].passLength = (int*) malloc(sizeof(int)*NUM_THREADS);
@@ -55,7 +55,7 @@ int main (int argc, char ** argv) {
 
     gettimeofday(&start, NULL);
 
-	for (i = 1; i < NUM_THREADS; i++)
+	for (i = 1; i < NUM_THREADS; ++i)
 	{
 		myTCB[i].pid = i; 
 		pthread_create(&(ThreadID[i]),NULL, mySPMDMain, (void*) &(myTCB[i]));
@@ -63,7 +63,7 @@ int main (int argc, char ** argv) {
 	myTCB[0].pid = 0;
 	mySPMDMain((void *) &(myTCB[0]));
 	
-	for (i = 1; i<NUM_THREADS; i++)
+	for (i = 1; i<NUM_THREADS; ++i)
 	{
 		pthread_join(ThreadID[i], NULL);
 	}
@@ -75,7 +75,7 @@ int main (int argc, char ** argv) {
 
     memset(originArray, 0, N*sizeof(long int));
     int cursor = 0;
-    for (i = 0; i<NUM_THREADS; i++)
+    for (i = 0; i<NUM_THREADS; ++i)
     {
         memcpy(&originArray[cursor], myTCB[i].resultArr, sumTotal(myTCB[i].mergeLength, NUM_THREADS) * sizeof(long int));
         cursor = cursor+sumTotal(myTCB[i].mergeLength, NUM_THREADS);
@@ -83,7 +83,7 @@ int main (int argc, char ** argv) {
 	/* Clean up and exit*/
 	pthread_barrier_destroy(&mybarrier);
 	assert(isSorted(originArray,N) == 1);
-    for (i = 0; i<NUM_THREADS; i++)
+    for (i = 0; i<NUM_THREADS; ++i)
     {
         free(myTCB[i].mergeLength);
         free(myTCB[i].eachStartIndex);
@@ -126,7 +126,7 @@ void * mySPMDMain(void *arg)
 	// Timing
 
 	/* Phase 1 */
-	for (int i = 0; i< localTCB -> num_threads; i++)
+	for (int i = 0; i< localTCB -> num_threads; ++i)
 	{
 		long int sample = localTCB->Chunk[i*localTCB -> offSet];
 		localTCB->samples[i]=sample;
@@ -136,16 +136,16 @@ void * mySPMDMain(void *arg)
 
 	/* Phase 2 */
 	MASTER {
-		for (int i = 0; i < localTCB -> num_threads; i++)
+		for (int i = 0; i < localTCB -> num_threads; ++i)
 		{
 			memcpy(&(localTCB->pivotArray[i*localTCB -> num_threads]),localTCB[i].samples, localTCB -> num_threads*sizeof(long int));
 		}
 		qsort(localTCB -> pivotArray, localTCB -> num_threads*localTCB -> num_threads, sizeof(long int), cmpfunc);
-		for (int i = 0; i<(localTCB -> num_threads)-1; i++)
+		for (int i = 0; i<(localTCB -> num_threads)-1; ++i)
 		{	
 			localTCB-> selectedPivot[i] = localTCB-> pivotArray[(i+1)*localTCB -> num_threads];
 		}
-		for (int i = 1; i<localTCB -> num_threads; i++)
+		for (int i = 1; i<localTCB -> num_threads; ++i)
 		{
 			memcpy(localTCB[i].selectedPivot,localTCB[0].selectedPivot,((localTCB -> num_threads)-1)*sizeof(long int));
 		}
@@ -154,29 +154,29 @@ void * mySPMDMain(void *arg)
 
 
 	/* Phase 3 */
-	for (int i = 0; i<(localTCB -> num_threads)-1; i++)
+	for (int i = 0; i<(localTCB -> num_threads)-1; ++i)
 	{
 		localTCB -> sampleIndex[i] = binarySearch(localTCB->Chunk,0,localTCB->ChunkSize -1, localTCB->selectedPivot[i]);
 	}
-	for (int i = 0; i<localTCB -> num_threads; i++)
+	for (int i = 0; i<localTCB -> num_threads; ++i)
 	{
 		if(i == 0) localTCB -> eachStartIndex[i] = 0;
 		else localTCB -> eachStartIndex[i] = localTCB -> sampleIndex[i-1];
 	}
-	for (int i = 0; i<localTCB -> num_threads; i++)
+	for (int i = 0; i<localTCB -> num_threads; ++i)
 	{
 		if (i == 0) localTCB -> passLength[i] = localTCB -> sampleIndex[i];
-		localTCB -> passLength[i] = localTCB -> sampleIndex[i] - localTCB -> sampleIndex[i-1];
-		if (i == (localTCB -> num_threads)-1) localTCB -> passLength[i] = localTCB -> ChunkSize - localTCB -> sampleIndex[i-1];
+		else if (i > 0 && i<(localTCB -> num_threads)-1) localTCB -> passLength[i] = localTCB -> sampleIndex[i] - localTCB -> sampleIndex[i-1];
+		else if (i == (localTCB -> num_threads)-1) localTCB -> passLength[i] = localTCB -> ChunkSize - localTCB -> sampleIndex[i-1];
 	}
 	BARRIER;
 
 
 	/* Phase 4 */
 	MASTER {
-		for (int i = 0; i<localTCB -> num_threads; i++)
+		for (int i = 0; i<localTCB -> num_threads; ++i)
 		{
-			for (int j = 0; j<localTCB -> num_threads; j++)
+			for (int j = 0; j<localTCB -> num_threads; ++j)
 			{
 			    // each temp merge space  = localTCB[i].tmpMergeSpace[j]
                 // each cpy start = localTCB[j].Chunk[localTCB[j].eachStartIndex[i]]

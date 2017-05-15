@@ -4,7 +4,7 @@ CC := gcc
 
 # Compile Options
 
-CCOPTS := -Wall -std=gnu99 -O1 -g
+CCOPTS := -Wall -std=gnu99 -O3 -g
 
 # Thread Linker
 LP := -lpthread
@@ -44,7 +44,7 @@ $(UTILO):	$(UTILC) $(UTILH)
 
 #debugging:
 memcheck:
-	valgrind --leak-check=full ./$(EXEC) 80000000 8	
+	valgrind --leak-check=full ./$(EXEC) 8000000 8	
 
 # Clean Up
 clean:

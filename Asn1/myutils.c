@@ -3,7 +3,7 @@
 int sumTotal(int *arr, int size)
 {
     int total = 0;
-    for (int i = 0; i<size; i++)
+    for (int i = 0; i<size; ++i)
     {
         total = total+arr[i];
     }
@@ -12,23 +12,23 @@ int sumTotal(int *arr, int size)
 
 void printArr(long int* arr, int size)
 {
-	for (int i = 0; i< size; i++)
+	for (int i = 0; i< size; ++i)
+    {
+        if (i == 0)
         {
-            if (i == 0)
-            {
-                printf("[ ");
-            }
-            printf("%ld ",arr[i]);
-            if (i == size -1)
-            {
-                printf("]\n");
+            printf("[ ");
+        }
+        printf("%ld ",arr[i]);
+        if (i == size -1)
+        {
+            printf("]\n");
 	    }
 	}
 }
 
 void printArrInt(int* arr, int size)
 {
-    for (int i = 0; i< size; i++)
+    for (int i = 0; i< size; ++i)
     {
         if (i == 0)
         {
@@ -97,7 +97,7 @@ int binarySearch(long int *arr, int l, int r, long int x)
 }
 
 int isSorted(long int * arr, int size) {
-    for (int i = 0; i<size -1; i++) {
+    for (int i = 0; i<size -1; ++i) {
         if (arr[i] > arr[i+1]) {
             return 0;
         }
